@@ -108,8 +108,6 @@ class PixelCNN(nn.Module):
 
         _, _, out = self.hidden_conv({0: v, 1: h, 2: None}).values()
 
-        assert out.requires_grad
-
         out = F.relu(out)
         out = F.relu(self.out_hidden_conv(out))
         out = self.out_conv(out)

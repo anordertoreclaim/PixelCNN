@@ -25,7 +25,9 @@ def nearest_square(num):
 
 def save_samples(samples, filename):
     count, channels, height, width = samples.size()
-    samples = samples.view(count**0.5, count**0.5, channels, height, width)
-    samples = samples.permute(1, 3, 0, 4, 2)
-    samples = samples.view(height * count, width * count, channels) * 255
+    images_on_side = int(count ** 0.5)
+    samples = samples.view(images_on_side, images_on_side, channels, height, width)
+    samples = samples.permute(1, 3, 0, 4, 2).contigous()
+    samples = samples.view(height * images_on_side, width * images_on_side, channels) * 255
+    samples = samples.squeeze()
     Image.fromarray(samples).save(filename)

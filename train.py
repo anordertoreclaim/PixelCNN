@@ -14,7 +14,7 @@ from pixelcnn import PixelCNN
 
 DATASET_ROOT = "data/"
 TRAIN_SAMPLES_PATH = "train_samples"
-TRAIN_SAMPLES_COUNT = 16 #must be square
+TRAIN_SAMPLES_COUNT = 4 #must be square
 
 
 def main():
@@ -52,8 +52,10 @@ def main():
                         help='Path where sampled images will be saved')
 
     cfg = parser.parse_args()
+
     LEVELS = cfg.color_levels
     MODEL_PATH = cfg.model_output_path
+    EPOCHS = cfg.epochs
 
     model = PixelCNN(cfg=cfg)
 
@@ -80,8 +82,8 @@ def main():
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters())
 
-    for epoch in tqdm(range(cfg.epochs)):
-        for images, _ in data_loader:
+    for epoch in range(EPOCHS):
+        for images, _ in tqdm(data_loader, desc="Epoch {}/{}".format(epoch, EPOCHS)):
             optimizer.zero_grad()
 
             normalized_images = images.float() / (LEVELS - 1)

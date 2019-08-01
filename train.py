@@ -62,7 +62,8 @@ def main():
 
     transform = transforms.Compose([
         transforms.Lambda(lambda image: quantisize(image, LEVELS)),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Lambda(lambda tensor: tensor.to(device))
     ])
     if cfg.dataset == "mnist":
         dataset = datasets.MNIST(root=DATASET_ROOT, train=True, download=True, transform=transform)
@@ -80,12 +81,8 @@ def main():
     optimizer = optim.Adam(model.parameters())
 
     for epoch in tqdm(range(cfg.epochs)):
-        for i, images in enumerate(data_loader):
+        for images, _ in data_loader:
             optimizer.zero_grad()
-
-            if cfg.dataset in ['mnist', 'fashionmnist', 'cifar']:
-                # remove labels
-                images = images[0]
 
             normalized_images = images.float() / (LEVELS - 1)
 

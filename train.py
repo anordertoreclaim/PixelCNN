@@ -6,14 +6,13 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
 import argparse
-import os
 from utils import str2bool, quantisize, save_samples
 from tqdm import tqdm
 
 from pixelcnn import PixelCNN
 
 DATASET_ROOT = "data/"
-TRAIN_SAMPLES_PATH = "train_samples"
+TRAIN_SAMPLES_DIRNAME = "train_samples"
 TRAIN_SAMPLES_COUNT = 4 #must be square
 
 
@@ -95,7 +94,7 @@ def main():
 
         model.eval()
         samples = model.sample((cfg.data_channels, HEIGHT, WIDTH), TRAIN_SAMPLES_COUNT)
-        save_samples(samples, os.path.join(TRAIN_SAMPLES_PATH, 'epoch{}_samples.jpg'.format(epoch)))
+        save_samples(samples, TRAIN_SAMPLES_DIRNAME, 'epoch{}_samples.png'.format(epoch))
         model.train()
 
     torch.save(model.state_dict(), MODEL_PATH)

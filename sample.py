@@ -5,6 +5,8 @@ from pixelcnn import PixelCNN
 import argparse
 from utils import str2bool, save_samples
 
+OUTPUT_DIRNAME = 'samples'
+
 
 def main():
     parser = argparse.ArgumentParser(description='PixelCNN')
@@ -30,7 +32,7 @@ def main():
                         help='Flag indicating whether CUDA should be used')
     parser.add_argument('--model-path', '-m', default='',
                         help="Path to model's saved parameters")
-    parser.add_argument('--output-fname', '-o', type=str, default='samples/samples.jpg',
+    parser.add_argument('--output-fname', '-o', type=str, default='samples.png',
                         help='Output filename')
 
     parser.add_argument('--count', '-c', type=int, default=10,
@@ -50,7 +52,7 @@ def main():
     model.load_state_dict(torch.load(cfg.model_path))
 
     samples = model.sample((cfg.data_channels, cfg.height, cfg.width), cfg.count)
-    save_samples(samples, cfg.output_fname)
+    save_samples(samples, OUTPUT_DIRNAME, cfg.output_fname)
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ def save_samples(samples, filename):
     count, channels, height, width = samples.size()
     images_on_side = int(count ** 0.5)
     samples = samples.view(images_on_side, images_on_side, channels, height, width)
-    samples = samples.permute(1, 3, 0, 4, 2).contigous()
+    samples = samples.permute(1, 3, 0, 4, 2).contiguous()
     samples = samples.view(height * images_on_side, width * images_on_side, channels) * 255
     samples = samples.squeeze()
     Image.fromarray(samples).save(filename)

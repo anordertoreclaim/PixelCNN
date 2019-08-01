@@ -50,7 +50,10 @@ class GatedBlock(nn.Module):
         h_out += v_shifted
         h_out = torch.tanh(h_out[:, :self.split_index]) * torch.sigmoid(h_out[:, self.split_index:])
 
-        skip = skip + self.h_skip(h_out)
+        if skip is None:
+            skip = self.h_skip(h_out)
+        else:
+            skip = skip + self.h_skip(h_out)
 
         h_out = self.h_fc(h_out) + h_in
 
@@ -82,7 +85,7 @@ class PixelCNN(nn.Module):
                          self.hidden_fmaps,
                          self.hidden_ksize,
                          mask_type='B',
-                         data_channels=self.data_channels) for _ in range(self.hidden_layers)]
+                         data_channels=self.data_channels) for _ in range(self.hidden_layers)],
         )
 
         self.out_hidden_conv = MaskedConv2d(self.hidden_fmaps,
@@ -100,11 +103,10 @@ class PixelCNN(nn.Module):
 
     def forward(self, x):
         count, _, height, width = x.size()
-        out_shape = (count, self.hidden_fmaps, height, width)
 
-        v, h, _ = self.causal_conv({0: x, 1: x, 2: torch.zeros(out_shape, requires_grad=True)}).values()
+        v, h, _ = self.causal_conv({0: x, 1: x, 2: None}).values()
 
-        _, _, out = self.hidden_conv({0: v, 1: h, 2: torch.zeros(out_shape, requires_grad=True)}).values()
+        _, _, out = self.hidden_conv({0: v, 1: h, 2: None}).values()
 
         assert out.requires_grad
 

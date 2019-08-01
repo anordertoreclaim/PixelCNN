@@ -56,7 +56,9 @@ class MaskedConv2d(nn.Conv2d):
             for c in range(data_channels):
                 mask[cmask(c, c), yc, xc] = 0
 
-        self.mask = torch.from_numpy(mask)
+        mask = torch.from_numpy(mask).float()
+
+        self.register_buffer('mask', mask)
 
     def forward(self, x):
         self.weight.data *= self.mask

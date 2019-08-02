@@ -1,4 +1,5 @@
 #PixelCNN
+
 This repository is a PyTorch implementation of [PixelCNN](https://arxiv.org/abs/1601.06759) in its [gated](https://arxiv.org/abs/1606.05328) form.
 The main goals I've pursued while doing so is to dive deeper into PyTorch and the network's architecture itself, which I've found both interesting and challenging to grasp. The repo might help someone, too!
 
@@ -23,12 +24,12 @@ There are 2 types of masks: A and B. Masked convolution of type A can only see p
 
 The problem with a simple masking approach was the blind spot: when predicting some pixels, a portion of the image did not influence the prediction. This was fixed by introducing 2 separate convolutions: horizontal and vertical.  Vertical convolution performs a simple unmasked convolution and sends its outputs to a horizontal convolution, which performs a masked 1-by-N convolution. They also added gates in order to increase the predicting power of the model.
 
-#### Gated block
+## Gated block
 The main submodel of PixelCNN is a gated block, several of which are used in the network. Here is how it looks:
 
 ![Gated block](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/gated_block.png?raw=true)
 
-#### High level architecture
+## High level architecture
 Here is what the whole architecture looks like:
 
 ![PixelCNN architecture](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/architecture.png?raw=true)

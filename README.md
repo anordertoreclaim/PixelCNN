@@ -22,10 +22,10 @@ The order is row-wise i.e. value of each pixel depends on values of all pixels a
 In order to achieve this property authors of the papers used simple masked convolutions, which in the case of 1-channel black and white images look like this:
 
 <p align="center">
-  <img width="403" height="256" src="https://lilianweng.github.io/lil-log/assets/images/pixel-cnn.png
-">
+  <img width="403" height="256" src="https://lilianweng.github.io/lil-log/assets/images/pixel-cnn.png">
 </p>
 (i. e. convolutional filters are multiplied by this mask before being applied to images)
+
 
 There are 2 types of masks: A and B. Masked convolution of type A can only see previously generated pixels, while mask of type B allows taking value of a pixel being predicted into consideration. Applying B-masked convolution after A-masked one preserves the causality, work it out! In the case of 3 data channels, types of masks are depicted on this image:
 

@@ -63,7 +63,8 @@ def main():
 
     transform = transforms.Compose([
         transforms.Lambda(lambda image: quantisize(image, LEVELS)),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Lambda(lambda tensor: tensor.to(device))
     ])
     if cfg.dataset == "mnist":
         dataset = datasets.MNIST(root=DATASET_ROOT, train=True, download=True, transform=transform)
@@ -84,7 +85,7 @@ def main():
         for images, _ in tqdm(data_loader, desc="Epoch {}/{}".format(epoch, EPOCHS)):
             optimizer.zero_grad()
 
-            images = images.to(device, non_blocking=True)
+            #images = images.to(device, non_blocking=True)
             normalized_images = images.float() / (LEVELS - 1)
 
             outputs = model(normalized_images)

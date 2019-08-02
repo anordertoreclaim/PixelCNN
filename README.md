@@ -9,21 +9,30 @@ A lot of ideas were taken from [rampage644](https://github.com/rampage644)'s, [b
 Here I am going to sum up the main idea behind the architecture. I won't go deep into implementation details and how convolutions work, because it would be too much text and visuals. Visit the links above in order to have a more detailed look on the inner workings of the architecture. Then come here for a summary :)
 
 At first this architecture was an attempt to speed up the learning process of a RNN implementation of the same idea, which is a generative model that learns an explicit joint distribution of image's pixels by modeling it using simple chain rule:
-![Chain rule](http://latex.codecogs.com/gif.latex?p%28%5Cmathbf%7Bx%7D%29%20%3D%20%5Cprod_%7Bi%3D1%7D%5E%7BD%7D%20p%28x_i%5Cvert%20x_1%2C%20%5Cdots%2C%20x_%7Bi-1%7D%29%20%3D%20%5Cprod_%7Bi%3D1%7D%5E%7BD%7D%20p%28x_i%5Cvert%20x_%7B1%3Ai-1%7D%29)
+
+<p align="center">
+  <img width="353" height="54" src="http://latex.codecogs.com/gif.latex?p%28%5Cmathbf%7Bx%7D%29%20%3D%20%5Cprod_%7Bi%3D1%7D%5E%7BD%7D%20p%28x_i%5Cvert%20x_1%2C%20%5Cdots%2C%20x_%7Bi-1%7D%29%20%3D%20%5Cprod_%7Bi%3D1%7D%5E%7BD%7D%20p%28x_i%5Cvert%20x_%7B1%3Ai-1%7D%29">
+</p>
 
 The order is row-wise i.e. value of each pixel depends on values of all pixels above and to the left of it. Here is an explanatory image:
 
-![PixelCNN chain rule](https://wiki.math.uwaterloo.ca/statwiki/images/thumb/5/5b/xi_img.png/1000px-xi_img.png)
-
+<p align="center">
+  <img width="239" height="247" src="http://sergeiturukin.com/assets/2017-02-22-183010_479x494_scrot.png">
+</p>
 In order to achieve this property authors of the papers used simple masked convolutions, which in the case of 1-channel black and white images look like this:
 
-![1-channel masked convolution](https://lilianweng.github.io/lil-log/assets/images/pixel-cnn.png)
-
+<p align="center">
+  <img width="403" height="256" src="https://lilianweng.github.io/lil-log/assets/images/pixel-cnn.png
+">
+</p>
 (i. e. convolutional filters are multiplied by this mask before being applied to images)
 
 There are 2 types of masks: A and B. Masked convolution of type A can only see previously generated pixels, while mask of type B allows taking value of a pixel being predicted into consideration. Applying B-masked convolution after A-masked one preserves the causality, work it out! In the case of 3 data channels, types of masks are depicted on this image:
 
-![Mask. types](http://sergeiturukin.com/assets/2017-02-23-195558_546x364_scrot.png)
+<p align="center">
+  <img width="273" height="182" src="http://sergeiturukin.com/assets/2017-02-23-195558_546x364_scrot.png">
+</p>
+
 
 The problem with a simple masking approach was the blind spot: when predicting some pixels, a portion of the image did not influence the prediction. This was fixed by introducing 2 separate convolutions: horizontal and vertical.  Vertical convolution performs a simple unmasked convolution and sends its outputs to a horizontal convolution, which performs a masked 1-by-N convolution. They also added gates in order to increase the predicting power of the model.
 

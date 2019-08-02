@@ -81,7 +81,7 @@ def main():
     optimizer = optim.Adam(model.parameters())
 
     for epoch in range(EPOCHS):
-        for images, _ in tqdm(data_loader, desc="Epoch {}/{}".format(epoch, EPOCHS)):
+        for images, _ in tqdm(data_loader, desc="Epoch {}/{}".format(epoch+1, EPOCHS)):
             optimizer.zero_grad()
 
             images = images.to(device, non_blocking=True)

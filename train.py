@@ -84,7 +84,7 @@ def main():
         for images, _ in tqdm(data_loader, desc="Epoch {}/{}".format(epoch, EPOCHS)):
             optimizer.zero_grad()
 
-            images = images.to(device)
+            images = images.to(device, non_blocking=True)
             normalized_images = images.float() / (LEVELS - 1)
 
             outputs = model(normalized_images)

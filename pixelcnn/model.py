@@ -56,7 +56,7 @@ class GatedBlock(nn.Module):
         else:
             skip = skip + self.h_skip(h_out)
 
-        h_out = self.hc(h_out)
+        h_out = self.h_fc(h_out)
 
         if self.residual:
             h_out = h_out + h_in

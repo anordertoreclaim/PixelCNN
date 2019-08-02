@@ -5,9 +5,10 @@ from .conv_layers import MaskedConv2d, CroppedConv2d
 
 
 class GatedBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, mask_type, data_channels):
+    def __init__(self, in_channels, out_channels, kernel_size, mask_type, data_channels, residual=True):
         super(GatedBlock, self).__init__()
         self.split_index = out_channels
+        self.residual = residual
 
         self.v_conv = CroppedConv2d(in_channels,
                                     2 * out_channels,
@@ -55,7 +56,10 @@ class GatedBlock(nn.Module):
         else:
             skip = skip + self.h_skip(h_out)
 
-        h_out = self.h_fc(h_out) + h_in
+        h_out = self.hc(h_out)
+
+        if self.residual:
+            h_out = h_out + h_in
 
         return {0: v_out, 1: h_out, 2: skip}
 
@@ -78,7 +82,8 @@ class PixelCNN(nn.Module):
                                       self.hidden_fmaps,
                                       self.causal_ksize,
                                       mask_type='A',
-                                      data_channels=self.data_channels)
+                                      data_channels=self.data_channels,
+                                      residual=False)
 
         self.hidden_conv = nn.Sequential(
             *[GatedBlock(self.hidden_fmaps,

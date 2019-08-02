@@ -30,7 +30,7 @@ def save_samples(samples, dirname, filename):
     samples = samples.view(images_on_side, images_on_side, channels, height, width)
     samples = samples.permute(1, 3, 0, 4, 2).contiguous()
     samples = samples.view(height * images_on_side, width * images_on_side, channels) * 255
-    samples = samples.squeeze().numpy()
+    samples = samples.squeeze().cpu().numpy()
 
     if not os.path.exists(dirname):
         os.mkdir(dirname)

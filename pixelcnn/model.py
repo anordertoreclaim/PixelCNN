@@ -122,10 +122,10 @@ class PixelCNN(nn.Module):
 
         return out
 
-    def sample(self, shape, count):
+    def sample(self, shape, count, device="cuda"):
         channels, height, width = shape
 
-        samples = torch.zeros(count, *shape)
+        samples = torch.zeros(count, *shape).to(device)
 
         with torch.no_grad():
             for i in range(height):

@@ -93,7 +93,7 @@ def main():
             optimizer.step()
 
         model.eval()
-        samples = model.sample((cfg.data_channels, HEIGHT, WIDTH), TRAIN_SAMPLES_COUNT)
+        samples = model.sample((cfg.data_channels, HEIGHT, WIDTH), TRAIN_SAMPLES_COUNT, device=device)
         save_samples(samples, TRAIN_SAMPLES_DIRNAME, 'epoch{}_samples.png'.format(epoch))
         model.train()
 

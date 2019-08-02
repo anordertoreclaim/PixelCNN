@@ -30,7 +30,7 @@ def main():
 
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
-    parser.add_argument('--model-path', '-m', default='',
+    parser.add_argument('--model-path', '-m',
                         help="Path to model's saved parameters")
     parser.add_argument('--output-fname', '-o', type=str, default='samples.png',
                         help='Output filename')

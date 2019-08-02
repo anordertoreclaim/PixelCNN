@@ -6,6 +6,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
 import argparse
+import os
 from utils import str2bool, quantisize, save_samples
 from tqdm import tqdm
 
@@ -45,7 +46,7 @@ def main():
 
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
-    parser.add_argument('--model-output-path', '-m', default='',
+    parser.add_argument('--model-output-path', '-m', default='model/params.pth',
                         help="Output path for model's parameters")
     parser.add_argument('--samples-folder', '-o', type=str, default='train-samples/',
                         help='Path where sampled images will be saved')
@@ -97,6 +98,8 @@ def main():
         save_samples(samples, TRAIN_SAMPLES_DIRNAME, 'epoch{}_samples.png'.format(epoch))
         model.train()
 
+    if not os.path.exists(MODEL_PATH):
+        os.mkdir(MODEL_PATH)
     torch.save(model.state_dict(), MODEL_PATH)
 
 

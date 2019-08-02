@@ -139,3 +139,10 @@ optional arguments:
 ```
 # Examples of samples
 ## TODO
+
+# Future plans
+Since the architecture is a prerequisite to quite a few models, I have choices:
+* implement a conditional variant of the model;
+* implement a PixelCNN++ architecture;
+* might look into PixelVAE;
+* dive into WaveNet.

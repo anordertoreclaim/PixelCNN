@@ -89,6 +89,11 @@ def main():
     parser.add_argument('--hidden-layers', type=int, default=10,
                         help='Number of layers of gated convolutions with mask of type "B"')
 
+    parser.add_argument('--learning-rate', '--lr', type=float, default=0.001,
+                        help='Learning rate of optimizer')
+    parser.add_argument('--weight-decay', type=float, default=0.0001,
+                        help='Weight decay rate of optimizer')
+
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
 
@@ -112,7 +117,7 @@ def main():
 
     train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg.dataset, transform, cfg.batch_size, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
 
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate, weight_decay=cfg.weight_decay)
 
     wandb.watch(model)
 

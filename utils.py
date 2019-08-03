@@ -5,6 +5,7 @@ import os
 from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 from torchvision import datasets
+import torch
 
 
 def quantisize(image, levels):
@@ -61,3 +62,7 @@ def get_loaders(dataset, transform, batch_size, train_root, test_root):
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
 
     return train_loader, test_loader, HEIGHT, WIDTH
+
+
+def save_checkpoint(state, filename):
+    torch.save(state, filename)

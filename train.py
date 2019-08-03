@@ -6,8 +6,7 @@ from torchvision import transforms
 
 import argparse
 import os
-import sys
-from utils import str2bool, quantisize, save_samples, get_loaders
+from utils import str2bool, quantisize, save_samples, get_loaders, save_checkpoint
 from tqdm import tqdm
 import wandb
 
@@ -26,7 +25,7 @@ TRAIN_SAMPLES_COUNT = 9
 def train(cfg, model, device, train_loader, optimizer, epoch):
     model.train()
 
-    for images, _ in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch+1, cfg.epochs)):
+    for images, _ in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs)):
         optimizer.zero_grad()
 
         images = images.to(device)
@@ -59,7 +58,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
     print("\nAverage test loss: {}".format(test_loss))
 
     samples = model.sample((cfg.data_channels, height, width), TRAIN_SAMPLES_COUNT, device=device)
-    save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch))
+    save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))
 
 
 def main():
@@ -125,10 +124,19 @@ def main():
         train(cfg, model, device, train_loader, optimizer, epoch)
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, epoch)
 
+        if epoch > 0 and epoch % 10 == 0:
+            if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
+                os.mkdir(MODEL_PARAMS_OUTPUT_DIR)
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict()
+            }, os.path.join(MODEL_PARAMS_OUTPUT_DIR, 'epoch{}_checkpoint.pth'.format(epoch + 1)))
+
     if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
         os.mkdir(MODEL_PARAMS_OUTPUT_DIR)
     torch.save(model.state_dict(), os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

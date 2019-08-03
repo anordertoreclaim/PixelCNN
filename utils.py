@@ -2,7 +2,9 @@ import numpy as np
 import argparse
 import os
 
-from PIL import Image
+from torchvision.utils import save_image
+from torch.utils.data import DataLoader
+from torchvision import datasets
 
 
 def quantisize(image, levels):
@@ -25,14 +27,37 @@ def nearest_square(num):
 
 
 def save_samples(samples, dirname, filename):
-    count, channels, height, width = samples.size()
-    images_on_side = int(count ** 0.5)
-    samples = samples.view(images_on_side, images_on_side, channels, height, width)
-    samples = samples.permute(1, 3, 0, 4, 2).contiguous()
-    samples = samples.view(height * images_on_side, width * images_on_side, channels) * 255
-    samples = samples.squeeze().cpu().numpy()
-
     if not os.path.exists(dirname):
         os.mkdir(dirname)
-    image = Image.fromarray(samples, mode='RGB' if len(samples.shape) == 3 else 'L')
-    image.save(os.path.join(dirname, filename), "PNG")
+
+    count = samples.size()[0]
+
+    count_sqrt = int(count ** 0.5)
+    if count_sqrt ** 2 == count:
+        nrow = count_sqrt
+    else:
+        nrow = count
+
+    save_image(samples, os.path.join(dirname, filename), nrow=nrow)
+
+
+def get_loaders(dataset, transform, batch_size, train_root, test_root):
+    if dataset == "mnist":
+        train_dataset = datasets.MNIST(root=train_root, train=True, download=True, transform=transform)
+        test_dataset = datasets.MNIST(root=test_root, train=False, download=True, transform=transform)
+        HEIGHT, WIDTH = 28, 28
+    elif dataset == "fashionmnist":
+        train_dataset = datasets.FashionMNIST(root=train_root, train=True, download=True, transform=transform)
+        test_dataset = datasets.FashionMNIST(root=test_root, train=False, download=True, transform=transform)
+        HEIGHT, WIDTH = 28, 28
+    elif dataset == "cifar":
+        train_dataset = datasets.CIFAR10(root=train_root, train=True, download=True, transform=transform)
+        test_dataset = datasets.CIFAR10(root=test_root, train=False, download=True, transform=transform)
+        HEIGHT, WIDTH = 32, 32
+    else:
+        raise AttributeError("Unsupported dataset")
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
+
+    return train_loader, test_loader, HEIGHT, WIDTH

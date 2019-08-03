@@ -39,7 +39,6 @@ class MaskedConv2d(nn.Conv2d):
                 lbound = out_c * split
                 ubound = (out_c + 1) * split
                 a = ((lbound <= np.arange(out_channels)) * (np.arange(out_channels) < ubound))[:, None]
-
             if in_spread:
                 b = (np.arange(in_channels) % data_channels == in_c)[None, :]
             else:
@@ -47,7 +46,6 @@ class MaskedConv2d(nn.Conv2d):
                 lbound = in_c * split
                 ubound = (in_c + 1) * split
                 b = ((lbound <= np.arange(in_channels)) * (np.arange(in_channels) < ubound))[None, :]
-
             return a * b
 
         for o in range(data_channels):
@@ -59,6 +57,7 @@ class MaskedConv2d(nn.Conv2d):
                 mask[cmask(c, c), yc, xc] = 0
 
         mask = torch.from_numpy(mask).float()
+
         self.register_buffer('mask', mask)
 
     def forward(self, x):

@@ -1,20 +1,64 @@
 import torch
-import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
+from torchvision import transforms
 
 import argparse
 import os
-from utils import str2bool, quantisize, save_samples
+import sys
+from utils import str2bool, quantisize, save_samples, get_loaders
 from tqdm import tqdm
+import wandb
 
 from pixelcnn import PixelCNN
 
-DATASET_ROOT = "data/"
+TRAIN_DATASET_ROOT = ".data/train/"
+TEST_DATASET_ROOT = ".data/test/"
+
+MODEL_OUTPUT_DIR = "model"
+
 TRAIN_SAMPLES_DIRNAME = "train_samples"
-TRAIN_SAMPLES_COUNT = 9 #must be square
+TRAIN_SAMPLES_COUNT = 9
+
+
+def train(cfg, model, device, train_loader, optimizer, epoch):
+    model.train()
+
+    for images, _ in tqdm(train_loader, desc="Epoch {}/{}".format(epoch+1, cfg.epochs)):
+        optimizer.zero_grad()
+
+        images = images.to(device)
+        normalized_images = images.float() / (cfg.color_levels - 1)
+
+        outputs = model(normalized_images)
+        loss = F.cross_entropy(outputs, images)
+        loss.backward()
+        optimizer.step()
+
+
+def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
+    test_loss = 0
+
+    model.eval()
+    with torch.no_grad():
+        for images, _ in test_loader:
+            images = images.to(device)
+
+            normalized_images = images.float() / (cfg.color_levels - 1)
+            outputs = model(normalized_images)
+
+            test_loss += F.cross_entropy(outputs, images)
+
+    test_loss /= len(test_loader.dataset)
+
+    wandb.log({
+        "Test loss": test_loss
+    })
+    print("\nAverage test loss: {}".format(test_loss))
+
+    samples = model.sample((cfg.data_channels, height, width), TRAIN_SAMPLES_COUNT, device=device)
+    save_samples(samples, TRAIN_SAMPLES_DIRNAME, 'epoch{}_samples.png'.format(epoch))
 
 
 def main():
@@ -46,15 +90,17 @@ def main():
 
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
-    parser.add_argument('--model-output-path', '-m', default='model/params.pth',
+    parser.add_argument('--model-output-fname', '-m', default='params.pth',
                         help="Output path for model's parameters")
     parser.add_argument('--samples-folder', '-o', type=str, default='train-samples/',
                         help='Path where sampled images will be saved')
 
     cfg = parser.parse_args()
 
+    wandb.init(project="PixelCNN")
+    wandb.config.update(cfg)
+
     LEVELS = cfg.color_levels
-    MODEL_PATH = cfg.model_output_path
     EPOCHS = cfg.epochs
 
     model = PixelCNN(cfg=cfg)
@@ -66,42 +112,21 @@ def main():
         transforms.Lambda(lambda image: quantisize(image, LEVELS)),
         transforms.ToTensor(),
     ])
-    if cfg.dataset == "mnist":
-        dataset = datasets.MNIST(root=DATASET_ROOT, train=True, download=True, transform=transform)
-        HEIGHT, WIDTH = 28, 28
-    elif cfg.dataset == "fashionmnist":
-        dataset = datasets.FashionMNIST(root=DATASET_ROOT, train=True, download=True, transform=transform)
-        HEIGHT, WIDTH = 28, 28
-    elif cfg.dataset == "cifar":
-        dataset = datasets.CIFAR10(root=DATASET_ROOT, train=True, download=True, transform=transform)
-        HEIGHT, WIDTH = 28, 28
 
-    data_loader = DataLoader(dataset, batch_size=cfg.batch_size, pin_memory=True)
+    train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg.dataset, transform, cfg.batch_size, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
 
-    loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters())
 
+    wandb.watch(model)
+
     for epoch in range(EPOCHS):
-        for images, _ in tqdm(data_loader, desc="Epoch {}/{}".format(epoch+1, EPOCHS)):
-            optimizer.zero_grad()
+        train(cfg, model, device, train_loader, optimizer, epoch)
+        test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, epoch)
 
-            images = images.to(device, non_blocking=True)
-            normalized_images = images.float() / (LEVELS - 1)
-
-            outputs = model(normalized_images)
-            loss = loss_fn(outputs, images)
-            loss.backward()
-            optimizer.step()
-
-        model.eval()
-        samples = model.sample((cfg.data_channels, HEIGHT, WIDTH), TRAIN_SAMPLES_COUNT, device=device)
-        save_samples(samples, TRAIN_SAMPLES_DIRNAME, 'epoch{}_samples.png'.format(epoch))
-        model.train()
-
-    if not os.path.exists(MODEL_PATH):
-        os.mkdir(MODEL_PATH)
-    torch.save(model.state_dict(), MODEL_PATH)
+    if not os.path.exists(MODEL_OUTPUT_DIR):
+        os.mkdir(MODEL_OUTPUT_DIR)
+    torch.save(model.state_dict(), os.path.join(MODEL_OUTPUT_DIR, cfg.model_output_fname))
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

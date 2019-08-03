@@ -13,19 +13,20 @@ import wandb
 
 from pixelcnn import PixelCNN
 
-TRAIN_DATASET_ROOT = ".data/train/"
-TEST_DATASET_ROOT = ".data/test/"
+TRAIN_DATASET_ROOT = '.data/train/'
+TEST_DATASET_ROOT = '.data/test/'
 
-MODEL_OUTPUT_DIR = "model"
+MODEL_PARAMS_OUTPUT_DIR = 'model'
+MODEL_PARAMS_OUTPUT_FILENAME = 'params.pth'
 
-TRAIN_SAMPLES_DIRNAME = "train_samples"
+TRAIN_SAMPLES_DIR = 'train_samples'
 TRAIN_SAMPLES_COUNT = 9
 
 
 def train(cfg, model, device, train_loader, optimizer, epoch):
     model.train()
 
-    for images, _ in tqdm(train_loader, desc="Epoch {}/{}".format(epoch+1, cfg.epochs)):
+    for images, _ in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch+1, cfg.epochs)):
         optimizer.zero_grad()
 
         images = images.to(device)
@@ -58,7 +59,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
     print("\nAverage test loss: {}".format(test_loss))
 
     samples = model.sample((cfg.data_channels, height, width), TRAIN_SAMPLES_COUNT, device=device)
-    save_samples(samples, TRAIN_SAMPLES_DIRNAME, 'epoch{}_samples.png'.format(epoch))
+    save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch))
 
 
 def main():
@@ -90,10 +91,6 @@ def main():
 
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
-    parser.add_argument('--model-output-fname', '-m', default='params.pth',
-                        help="Output path for model's parameters")
-    parser.add_argument('--samples-folder', '-o', type=str, default='train-samples/',
-                        help='Path where sampled images will be saved')
 
     cfg = parser.parse_args()
 
@@ -110,7 +107,7 @@ def main():
 
     transform = transforms.Compose([
         transforms.Lambda(lambda image: quantisize(image, LEVELS)),
-        transforms.ToTensor(),
+        transforms.ToTensor()
     ])
 
     train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg.dataset, transform, cfg.batch_size, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
@@ -123,9 +120,9 @@ def main():
         train(cfg, model, device, train_loader, optimizer, epoch)
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, epoch)
 
-    if not os.path.exists(MODEL_OUTPUT_DIR):
-        os.mkdir(MODEL_OUTPUT_DIR)
-    torch.save(model.state_dict(), os.path.join(MODEL_OUTPUT_DIR, cfg.model_output_fname))
+    if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
+        os.mkdir(MODEL_PARAMS_OUTPUT_DIR)
+    torch.save(model.state_dict(), os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
 
 
 if __name__ == '__main__':

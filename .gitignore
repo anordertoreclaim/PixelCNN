@@ -1,5 +1,7 @@
 *.ipynb
 .ipynb_checkpoints
 .idea
+.data
 __pycache__/
 venv
+wandb

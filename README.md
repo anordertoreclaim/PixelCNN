@@ -47,11 +47,14 @@ Here is what the whole architecture looks like:
 ![PixelCNN architecture](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/architecture.png?raw=true)
 
 Causal block is the same as gated block, except that it has neither residual nor skip connections, its input is image instead of a tensor with depth of *hidden_fmaps* and it uses mask of type A instead of B of a usual gated block.
+
 Skip results are summed and ran through a ReLu – 1x1 Conv – ReLu block. Then the final convolutional layer is applied, which outputs a tensor that represents unnormalized probabilities of each color level for each color channel of each pixel in the image.
 
 # Training and sampling
 ### Train
 In order to train the model, use the `python train.py` command and set optional arguments if needed.
+
+Model's state dictionary is saved to `model/params.pth` by default. Samples which are generated during training are saved to `train_samples` folder by default.
 ```
 $ python train.py -h
 usage: train.py [-h] [--epochs EPOCHS] [--batch-size BATCH_SIZE]
@@ -60,8 +63,6 @@ usage: train.py [-h] [--epochs EPOCHS] [--batch-size BATCH_SIZE]
                 [--color-levels COLOR_LEVELS] [--hidden-fmaps HIDDEN_FMAPS]
                 [--out-hidden-fmaps OUT_HIDDEN_FMAPS]
                 [--hidden-layers HIDDEN_LAYERS] [--cuda CUDA]
-                [--model-output-path MODEL_OUTPUT_PATH]
-                [--samples-folder SAMPLES_FOLDER]
 
 PixelCNN
 
@@ -89,13 +90,11 @@ optional arguments:
                         Number of layers of gated convolutions with mask of
                         type "B"
   --cuda CUDA           Flag indicating whether CUDA should be used
-  --model-output-path MODEL_OUTPUT_PATH, -m MODEL_OUTPUT_PATH
-                        Output path for model's parameters
-  --samples-folder SAMPLES_FOLDER, -o SAMPLES_FOLDER
-                        Path where sampled images will be saved
 ```
 ### Sample
-Sampling is performed similarly: with `python sample.py`.
+Sampling is performed similarly with `python sample.py`. Path to model's saved parameters must be defined.
+
+Samples are saved to `samples/samples.png` by default.
 ```
 $ python sample.py -h
 usage: sample.py [-h] [--causal-ksize CAUSAL_KSIZE]
@@ -103,8 +102,8 @@ usage: sample.py [-h] [--causal-ksize CAUSAL_KSIZE]
                  [--color-levels COLOR_LEVELS] [--hidden-fmaps HIDDEN_FMAPS]
                  [--out-hidden-fmaps OUT_HIDDEN_FMAPS]
                  [--hidden-layers HIDDEN_LAYERS] [--cuda CUDA]
-                 [--model-path MODEL_PATH] [--output-fname OUTPUT_FNAME]
-                 [--count COUNT] [--height HEIGHT] [--width WIDTH]
+                 [--model-path MODEL_PATH] [--count COUNT] [--height HEIGHT]
+                 [--width WIDTH]
 
 PixelCNN
 
@@ -129,11 +128,8 @@ optional arguments:
   --cuda CUDA           Flag indicating whether CUDA should be used
   --model-path MODEL_PATH, -m MODEL_PATH
                         Path to model's saved parameters
-  --output-fname OUTPUT_FNAME, -o OUTPUT_FNAME
-                        Output filename
   --count COUNT, -c COUNT
-                        Number of images to generate (is rounded to the
-                        nearest integer square)
+                        Number of images to generate
   --height HEIGHT       Output image height
   --width WIDTH         Output image width
 ```

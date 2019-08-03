@@ -6,6 +6,7 @@ import argparse
 from utils import str2bool, save_samples
 
 OUTPUT_DIRNAME = 'samples'
+OUTPUT_FILENAME = 'samples.png'
 
 
 def main():
@@ -32,12 +33,9 @@ def main():
                         help='Flag indicating whether CUDA should be used')
     parser.add_argument('--model-path', '-m',
                         help="Path to model's saved parameters")
-    parser.add_argument('--output-fname', '-o', type=str, default='samples.png',
-                        help='Output filename')
 
     parser.add_argument('--count', '-c', type=int, default=10,
-                        help='Number of images to generate \
-                                  (is rounded to the nearest integer square)')
+                        help='Number of images to generate')
     parser.add_argument('--height', type=int, default=28, help='Output image height')
     parser.add_argument('--width', type=int, default=28, help='Output image width')
 
@@ -52,7 +50,7 @@ def main():
     model.load_state_dict(torch.load(cfg.model_path))
 
     samples = model.sample((cfg.data_channels, cfg.height, cfg.width), cfg.count)
-    save_samples(samples, OUTPUT_DIRNAME, cfg.output_fname)
+    save_samples(samples, OUTPUT_DIRNAME, OUTPUT_FILENAME)
 
 
 if __name__ == '__main__':

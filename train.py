@@ -14,7 +14,7 @@ from pixelcnn import PixelCNN
 
 DATASET_ROOT = "data/"
 TRAIN_SAMPLES_DIRNAME = "train_samples"
-TRAIN_SAMPLES_COUNT = 4 #must be square
+TRAIN_SAMPLES_COUNT = 9 #must be square
 
 
 def main():

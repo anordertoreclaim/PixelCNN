@@ -90,7 +90,7 @@ class PixelCNN(nn.Module):
                          self.hidden_fmaps,
                          self.hidden_ksize,
                          mask_type='B',
-                         data_channels=self.data_channels) for _ in range(self.hidden_layers)],
+                         data_channels=self.data_channels) for _ in range(self.hidden_layers)]
         )
 
         self.out_hidden_conv = MaskedConv2d(self.hidden_fmaps,

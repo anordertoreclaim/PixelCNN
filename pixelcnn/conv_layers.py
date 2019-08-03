@@ -13,7 +13,7 @@ class CroppedConv2d(nn.Conv2d):
 
         kernel_height, _ = self.kernel_size
         res = x[:, :, 1:-kernel_height, :]
-        shifted_up_res = x[:, :, :-kernel_height - 1, :]
+        shifted_up_res = x[:, :, :-kernel_height-1, :]
 
         return res, shifted_up_res
 

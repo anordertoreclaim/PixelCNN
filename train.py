@@ -1,6 +1,7 @@
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
+from torch.nn.utils import clip_grad_norm
 
 from torchvision import transforms
 
@@ -34,6 +35,9 @@ def train(cfg, model, device, train_loader, optimizer, epoch):
         outputs = model(normalized_images)
         loss = F.cross_entropy(outputs, images)
         loss.backward()
+
+        clip_grad_norm(model.parameters(), max_norm=cfg.max_norm)
+
         optimizer.step()
 
 
@@ -92,6 +96,8 @@ def main():
                         help='Learning rate of optimizer')
     parser.add_argument('--weight-decay', type=float, default=0.0001,
                         help='Weight decay rate of optimizer')
+    parser.add_argument('--max-norm', type=float, default=1.,
+                        help='Max norm of the gradients after clipping')
 
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')

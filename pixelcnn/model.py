@@ -21,7 +21,8 @@ class GatedBlock(nn.Module):
                                    2 * out_channels,
                                    (1, 1),
                                    mask_type=mask_type,
-                                   data_channels=data_channels, )
+                                   data_channels=data_channels)
+
         self.h_conv = MaskedConv2d(in_channels,
                                    2 * out_channels,
                                    (1, kernel_size),
@@ -120,7 +121,7 @@ class PixelCNN(nn.Module):
         batch_size, _, height, width = out.size()
         out = out.view(batch_size, self.color_levels, self.data_channels, height, width)
 
-        return out.contiguous()
+        return out
 
     def sample(self, shape, count, device="cuda"):
         channels, height, width = shape

@@ -1,7 +1,7 @@
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
-from torch.nn.utils import clip_grad_norm
+from torch.nn.utils import clip_grad_norm_
 
 from torchvision import transforms
 
@@ -36,7 +36,7 @@ def train(cfg, model, device, train_loader, optimizer, epoch):
         loss = F.cross_entropy(outputs, images)
         loss.backward()
 
-        clip_grad_norm(model.parameters(), max_norm=cfg.max_norm)
+        clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
 
         optimizer.step()
 

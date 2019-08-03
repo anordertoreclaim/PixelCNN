@@ -41,11 +41,13 @@ class MaskedConv2d(nn.Conv2d):
                 a = ((lbound <= np.arange(out_channels)) * (np.arange(out_channels) < ubound))[:, None]
             if in_spread:
                 b = (np.arange(in_channels) % data_channels == in_c)[None, :]
+
             else:
                 split = np.ceil(in_channels / 3)
                 lbound = in_c * split
                 ubound = (in_c + 1) * split
                 b = ((lbound <= np.arange(in_channels)) * (np.arange(in_channels) < ubound))[None, :]
+
             return a * b
 
         for o in range(data_channels):

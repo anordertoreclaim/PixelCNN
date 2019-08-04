@@ -133,8 +133,7 @@ class PixelCNN(nn.Module):
         out = F.relu(self.out_hidden_conv(out))
         out = self.out_conv(out)
 
-        batch_size, _, height, width = out.size()
-        out = out.view(batch_size, self.color_levels, self.data_channels, height, width)
+        out = out.view(count, self.color_levels, self.data_channels, height, width)
 
         return out
 

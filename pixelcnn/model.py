@@ -84,46 +84,40 @@ class GatedBlock(CausalConv2d):
 class PixelCNN(nn.Module):
     def __init__(self, cfg):
         super(PixelCNN, self).__init__()
-        self.causal_ksize = cfg.causal_ksize
-        self.hidden_ksize = cfg.hidden_ksize
 
-        self.data_channels = cfg.data_channels
         self.hidden_fmaps = cfg.hidden_fmaps
-        self.out_hidden_fmaps = cfg.out_hidden_fmaps
-
-        self.hidden_layers = cfg.hidden_layers
 
         self.color_levels = cfg.color_levels
 
-        self.causal_conv = CausalConv2d(self.data_channels,
-                                        self.hidden_fmaps,
-                                        self.causal_ksize,
+        self.causal_conv = CausalConv2d(cfg.data_channels,
+                                        cfg.hidden_fmaps,
+                                        cfg.causal_ksize,
                                         mask_type='A',
-                                        data_channels=self.data_channels)
+                                        data_channels=cfg.data_channels)
 
         self.hidden_conv = nn.Sequential(
-            *[GatedBlock(self.hidden_fmaps,
-                         self.hidden_fmaps,
-                         self.hidden_ksize,
+            *[GatedBlock(cfg.hidden_fmaps,
+                         cfg.hidden_fmaps,
+                         cfg.hidden_ksize,
                          mask_type='B',
-                         data_channels=self.data_channels) for _ in range(self.hidden_layers)],
+                         data_channels=cfg.data_channels) for _ in range(cfg.hidden_layers)],
         )
 
-        self.out_hidden_conv = MaskedConv2d(self.hidden_fmaps,
-                                            self.out_hidden_fmaps,
+        self.out_hidden_conv = MaskedConv2d(cfg.hidden_fmaps,
+                                            cfg.out_hidden_fmaps,
                                             (1, 1),
                                             mask_type='B',
-                                            data_channels=self.data_channels)
+                                            data_channels=cfg.data_channels)
 
-        self.out_conv = MaskedConv2d(self.out_hidden_fmaps,
-                                     self.data_channels * self.color_levels,
+        self.out_conv = MaskedConv2d(cfg.out_hidden_fmaps,
+                                     cfg.data_channels * cfg.color_levels,
                                      (1, 1),
                                      mask_type='B',
-                                     data_channels=self.data_channels,
+                                     data_channels=cfg.data_channels,
                                      out_spread=False)
 
     def forward(self, x):
-        count, _, height, width = x.size()
+        count, data_channels, height, width = x.size()
 
         v, h, _ = self.causal_conv({0: x, 1: x}).values()
 
@@ -133,11 +127,11 @@ class PixelCNN(nn.Module):
         out = F.relu(self.out_hidden_conv(out))
         out = self.out_conv(out)
 
-        out = out.view(count, self.color_levels, self.data_channels, height, width)
+        out = out.view(count, self.color_levels, data_channels, height, width)
 
         return out
 
-    def sample(self, shape, count, device="cuda"):
+    def sample(self, shape, count, device='cuda'):
         channels, height, width = shape
 
         samples = torch.zeros(count, *shape).to(device)

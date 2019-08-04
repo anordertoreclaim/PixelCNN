@@ -58,7 +58,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
     wandb.log({
         "Test loss": test_loss.cpu()
     })
-    print("\nAverage test loss: {}".format(test_loss))
+    print("Average test loss: {}".format(test_loss))
 
     samples = model.sample((cfg.data_channels, height, width), TRAIN_SAMPLES_COUNT, device=device)
     save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))

@@ -46,7 +46,7 @@ def save_samples(samples, dirname, filename):
     save_image(samples, os.path.join(dirname, filename), nrow=nrow)
 
 
-def get_loaders(dataset, batch_size, color_levels, train_root, test_root):
+def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
     discretize = transforms.Compose([
         transforms.Lambda(lambda image: quantisize(image, color_levels)),
         transforms.ToTensor()
@@ -57,25 +57,25 @@ def get_loaders(dataset, batch_size, color_levels, train_root, test_root):
         transforms.Lambda(lambda image_tensor: image_tensor.repeat(3, 1, 1))
     ])
 
-    if dataset == "mnist":
-        train_dataset = datasets.MNIST(root=train_root, train=True, download=True, transform=to_rgb)
-        test_dataset = datasets.MNIST(root=test_root, train=False, download=True, transform=to_rgb)
-        HEIGHT, WIDTH = 28, 28
-    elif dataset == "fashionmnist":
-        train_dataset = datasets.FashionMNIST(root=train_root, train=True, download=True, transform=to_rgb)
-        test_dataset = datasets.FashionMNIST(root=test_root, train=False, download=True, transform=to_rgb)
-        HEIGHT, WIDTH = 28, 28
-    elif dataset == "cifar":
-        train_dataset = datasets.CIFAR10(root=train_root, train=True, download=True, transform=discretize)
-        test_dataset = datasets.CIFAR10(root=test_root, train=False, download=True, transform=discretize)
-        HEIGHT, WIDTH = 32, 32
-    else:
+    dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST', 'cifar': 'CIFAR10'}
+    transform_mappings = {'mnist': to_rgb, 'fashionmnist': 'to_rgb', 'cifar': 'discretize'}
+    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32)}
+
+    try:
+        dataset = dataset_mappings[dataset_name]
+        transform = transform_mappings[dataset_name]
+
+        train_dataset = getattr(datasets, dataset)(root=train_root, train=True, download=True, transform=transform)
+        test_dataset = getattr(datasets, dataset)(root=test_root, train=False, download=True, transform=transform)
+
+        h, w = hw_mappings[dataset_name]
+    except KeyError:
         raise AttributeError("Unsupported dataset")
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
 
-    return train_loader, test_loader, HEIGHT, WIDTH
+    return train_loader, test_loader, h, w
 
 
 def save_checkpoint(state, filename):

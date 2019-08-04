@@ -51,7 +51,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
             normalized_images = images.float() / (cfg.color_levels - 1)
             outputs = model(normalized_images)
 
-            test_loss += F.cross_entropy(outputs, images)
+            test_loss += F.cross_entropy(outputs, images, reduction='none')
 
     test_loss /= len(test_loader.dataset)
 

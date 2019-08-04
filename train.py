@@ -53,10 +53,10 @@ def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
 
             test_loss += F.cross_entropy(outputs, images, reduction='none')
 
-    test_loss /= len(test_loader.dataset)
+    test_loss = test_loss.mean() / len(test_loader.dataset)
 
     wandb.log({
-        "Test loss": test_loss
+        "Test loss": test_loss.cpu()
     })
     print("\nAverage test loss: {}".format(test_loss))
 

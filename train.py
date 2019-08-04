@@ -8,6 +8,7 @@ from torchvision import transforms
 import argparse
 import os
 from utils import str2bool, quantisize, save_samples, get_loaders, save_checkpoint
+
 from tqdm import tqdm
 import wandb
 
@@ -29,7 +30,7 @@ def train(cfg, model, device, train_loader, optimizer, epoch):
     for images, _ in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs)):
         optimizer.zero_grad()
 
-        images = images.to(device)
+        images = images.to(device, non_blocking=True)
         normalized_images = images.float() / (cfg.color_levels - 1)
 
         outputs = model(normalized_images)

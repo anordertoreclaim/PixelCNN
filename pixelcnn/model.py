@@ -9,6 +9,7 @@ from utils import subdict
 class CausalConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, mask_type, data_channels):
         super(CausalConv2d, self).__init__()
+        self.split_size = out_channels
 
         self.v_conv = CroppedConv2d(in_channels,
                                     2 * out_channels,
@@ -40,13 +41,13 @@ class CausalConv2d(nn.Module):
 
         v_out, v_shifted = self.v_conv(v_in)
         v_out += self.v_fc(v_in)
-        v_out_tanh, v_out_sigmoid = torch.split(v_out, 2, dim=1)
+        v_out_tanh, v_out_sigmoid = torch.split(v_out, self.split_size, dim=1)
         v_out = torch.tanh(v_out_tanh) * torch.sigmoid(v_out_sigmoid)
 
         h_out = self.h_conv(h_in)
         v_shifted = self.v_to_h(v_shifted)
         h_out += v_shifted
-        h_out_tanh, h_out_sigmoid = torch.split(h_out, 2, dim=1)
+        h_out_tanh, h_out_sigmoid = torch.split(h_out, self.split_size, dim=1)
         h_gate = torch.tanh(h_out_tanh) * torch.sigmoid(h_out_sigmoid)
 
         h_out = self.h_fc(h_gate)

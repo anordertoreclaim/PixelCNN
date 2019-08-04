@@ -57,6 +57,8 @@ In order to train the model, use the `python train.py` command and set optional 
 Model's state dictionary is saved to `model/params.pth` by default. Samples which are generated during training are saved to `train_samples` folder by default.
 
 Model is checkpointed every 10 epochs.
+
+Run `wandb login` in order to monitor hardware usage and each layers' gradients.
 ```
 $ python train.py -h
 usage: train.py [-h] [--epochs EPOCHS] [--batch-size BATCH_SIZE]

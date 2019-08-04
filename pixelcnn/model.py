@@ -127,7 +127,7 @@ class PixelCNN(nn.Module):
 
         v, h, _ = self.causal_conv({0: x, 1: x}).values()
 
-        _, _, out = self.hidden_conv({0: v, 1: h, 2: x.new_zeros(x.size(), requires_grad=True)}).values()
+        _, _, out = self.hidden_conv({0: v, 1: h, 2: x.new_zeros((count, self.hidden_fmaps, height, width), requires_grad=True)}).values()
 
         out = F.relu(out)
         out = F.relu(self.out_hidden_conv(out))

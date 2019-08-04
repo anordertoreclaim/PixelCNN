@@ -12,6 +12,10 @@ def quantisize(image, levels):
     return np.digitize(image, np.arange(levels) / levels) - 1
 
 
+def subdict(d, keys):
+    return {k:v for k, v in d.items() if k in keys}
+
+
 def str2bool(s):
     if isinstance(s, bool):
         return s

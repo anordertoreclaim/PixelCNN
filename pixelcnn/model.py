@@ -3,12 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .conv_layers import MaskedConv2d, CroppedConv2d
 
+from utils import subdict
 
-class GatedBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, mask_type, data_channels, residual=True):
-        super(GatedBlock, self).__init__()
+
+class CausalConv2d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, mask_type, data_channels):
+        super(CausalConv2d, self).__init__()
         self.split_index = out_channels
-        self.residual = residual
 
         self.v_conv = CroppedConv2d(in_channels,
                                     2 * out_channels,
@@ -34,6 +35,28 @@ class GatedBlock(nn.Module):
                                  (1, 1),
                                  mask_type=mask_type,
                                  data_channels=data_channels)
+
+    def forward(self, x):
+        v_in, h_in = x[0], x[1]
+
+        v_out, v_shifted = self.v_conv(v_in)
+        v_out += self.v_fc(v_in)
+        v_out = torch.tanh(v_out[:, :self.split_index]) * torch.sigmoid(v_out[:, self.split_index:])
+
+        h_out = self.h_conv(h_in)
+        v_shifted = self.v_to_h(v_shifted)
+        h_out += v_shifted
+        h_gate = torch.tanh(h_out[:, :self.split_index]) * torch.sigmoid(h_out[:, self.split_index:])
+
+        h_out = self.h_fc(h_gate)
+
+        return {0: v_out, 1: h_out, 2: h_gate}
+
+
+class GatedBlock(CausalConv2d):
+    def __init__(self, in_channels, out_channels, kernel_size, mask_type, data_channels):
+        super(GatedBlock, self).__init__(in_channels, out_channels, kernel_size, mask_type, data_channels)
+
         self.h_skip = MaskedConv2d(out_channels,
                                    out_channels,
                                    (1, 1),
@@ -43,24 +66,15 @@ class GatedBlock(nn.Module):
     def forward(self, x):
         v_in, h_in, skip = x[0], x[1], x[2]
 
-        v_out, v_shifted = self.v_conv(v_in)
-        v_out += self.v_fc(v_in)
-        v_out = torch.tanh(v_out[:, :self.split_index]) * torch.sigmoid(v_out[:, self.split_index:])
+        # run v and h through CasualConv's forward
+        x = super(GatedBlock, self).forward(subdict(x, [0, 1]))
+        v_out, h_out, h_gate = x[0], x[1], x[2]
 
-        h_out = self.h_conv(h_in)
-        v_shifted = self.v_to_h(v_shifted)
-        h_out += v_shifted
-        h_out = torch.tanh(h_out[:, :self.split_index]) * torch.sigmoid(h_out[:, self.split_index:])
+        # skip connection
+        skip = skip + self.h_skip(h_gate)
 
-        if skip is None:
-            skip = self.h_skip(h_out)
-        else:
-            skip = skip + self.h_skip(h_out)
-
-        h_out = self.h_fc(h_out)
-
-        if self.residual:
-            h_out = h_out + h_in
+        # residual connection
+        h_out = h_out + h_in
 
         return {0: v_out, 1: h_out, 2: skip}
 
@@ -79,12 +93,11 @@ class PixelCNN(nn.Module):
 
         self.color_levels = cfg.color_levels
 
-        self.causal_conv = GatedBlock(self.data_channels,
-                                      self.hidden_fmaps,
-                                      self.causal_ksize,
-                                      mask_type='A',
-                                      data_channels=self.data_channels,
-                                      residual=False)
+        self.causal_conv = CausalConv2d(self.data_channels,
+                                        self.hidden_fmaps,
+                                        self.causal_ksize,
+                                        mask_type='A',
+                                        data_channels=self.data_channels)
 
         self.hidden_conv = nn.Sequential(
             *[GatedBlock(self.hidden_fmaps,
@@ -110,9 +123,9 @@ class PixelCNN(nn.Module):
     def forward(self, x):
         count, _, height, width = x.size()
 
-        v, h, _ = self.causal_conv({0: x, 1: x, 2: None}).values()
+        v, h, _ = self.causal_conv({0: x, 1: x}).values()
 
-        _, _, out = self.hidden_conv({0: v, 1: h, 2: None}).values()
+        _, _, out = self.hidden_conv({0: v, 1: h, 2: x.new_zeros(x.size(), requires_grad=True)}).values()
 
         out = F.relu(out)
         out = F.relu(self.out_hidden_conv(out))

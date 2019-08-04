@@ -113,8 +113,7 @@ class PixelCNN(nn.Module):
                                      cfg.data_channels * cfg.color_levels,
                                      (1, 1),
                                      mask_type='B',
-                                     data_channels=cfg.data_channels,
-                                     out_spread=False)
+                                     data_channels=cfg.data_channels)
 
     def forward(self, x):
         count, data_channels, height, width = x.size()

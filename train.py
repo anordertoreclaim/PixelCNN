@@ -130,7 +130,7 @@ def main():
         train(cfg, model, device, train_loader, optimizer, epoch)
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, epoch)
 
-        if epoch > 0 and epoch % 10 == 0:
+        if epoch + 1 % 10 == 0:
             if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
                 os.mkdir(MODEL_PARAMS_OUTPUT_DIR)
             save_checkpoint({

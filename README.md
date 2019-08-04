@@ -55,6 +55,8 @@ Skip results are summed and ran through a ReLu – 1x1 Conv – ReLu block. Then
 In order to train the model, use the `python train.py` command and set optional arguments if needed.
 
 Model's state dictionary is saved to `model/params.pth` by default. Samples which are generated during training are saved to `train_samples` folder by default.
+
+Model is checkpointed every 10 epochs.
 ```
 $ python train.py -h
 usage: train.py [-h] [--epochs EPOCHS] [--batch-size BATCH_SIZE]
@@ -62,7 +64,9 @@ usage: train.py [-h] [--epochs EPOCHS] [--batch-size BATCH_SIZE]
                 [--hidden-ksize HIDDEN_KSIZE] [--data-channels DATA_CHANNELS]
                 [--color-levels COLOR_LEVELS] [--hidden-fmaps HIDDEN_FMAPS]
                 [--out-hidden-fmaps OUT_HIDDEN_FMAPS]
-                [--hidden-layers HIDDEN_LAYERS] [--cuda CUDA]
+                [--hidden-layers HIDDEN_LAYERS]
+                [--learning-rate LEARNING_RATE] [--weight-decay WEIGHT_DECAY]
+                [--max-norm MAX_NORM] [--cuda CUDA]
 
 PixelCNN
 
@@ -89,6 +93,11 @@ optional arguments:
   --hidden-layers HIDDEN_LAYERS
                         Number of layers of gated convolutions with mask of
                         type "B"
+  --learning-rate LEARNING_RATE, --lr LEARNING_RATE
+                        Learning rate of optimizer
+  --weight-decay WEIGHT_DECAY
+                        Weight decay rate of optimizer
+  --max-norm MAX_NORM   Max norm of the gradients after clipping
   --cuda CUDA           Flag indicating whether CUDA should be used
 ```
 ### Sample

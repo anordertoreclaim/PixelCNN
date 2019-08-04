@@ -142,7 +142,7 @@ class PixelCNN(nn.Module):
                     for c in range(channels):
                         unnormalized_probs = self.forward(samples)
                         pixel_probs = torch.softmax(unnormalized_probs[:, :, c, i, j], dim=1)
-                        sampled_levels = torch.multinomial(pixel_probs, 1).squeeze()
+                        sampled_levels = torch.multinomial(pixel_probs, 1).squeeze() / (self.color_levels - 1)
                         samples[:, c, i, j] = sampled_levels
 
         return samples

@@ -54,7 +54,7 @@ def get_loaders(dataset, batch_size, color_levels, train_root, test_root):
 
     to_rgb = transforms.Compose([
         discretize,
-        transforms.Lambda(lambda image_tensor: image_tensor.unsqueeze(0).repeat(3, 1, 1))
+        transforms.Lambda(lambda image_tensor: image_tensor.repeat(3, 1, 1))
     ])
 
     if dataset == "mnist":

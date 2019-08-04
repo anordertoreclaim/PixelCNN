@@ -110,9 +110,7 @@ class PixelCNN(nn.Module):
     def forward(self, x):
         count, _, height, width = x.size()
 
-        x1, x2 = x.clone(), x.clone()
-
-        v, h, _ = self.causal_conv({0: x1, 1: x2, 2: None}).values()
+        v, h, _ = self.causal_conv({0: x, 1: x, 2: None}).values()
 
         _, _, out = self.hidden_conv({0: v, 1: h, 2: None}).values()
 

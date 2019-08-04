@@ -4,7 +4,7 @@ import os
 
 from torchvision.utils import save_image
 from torch.utils.data import DataLoader
-from torchvision import datasets
+from torchvision import datasets, transforms
 import torch
 
 
@@ -46,18 +46,27 @@ def save_samples(samples, dirname, filename):
     save_image(samples, os.path.join(dirname, filename), nrow=nrow)
 
 
-def get_loaders(dataset, transform, batch_size, train_root, test_root):
+def get_loaders(dataset, batch_size, color_levels, train_root, test_root):
+    discretize = transforms.Compose([
+        transforms.Lambda(lambda image: quantisize(image, color_levels)),
+        transforms.ToTensor()
+    ])
+
+    to_rgb = transforms.Compose([
+        transforms.Lambda(lambda image_tensor: image_tensor.unsqueeze(0).repeat(3, 1, 1))
+    ])
+
     if dataset == "mnist":
-        train_dataset = datasets.MNIST(root=train_root, train=True, download=True, transform=transform)
-        test_dataset = datasets.MNIST(root=test_root, train=False, download=True, transform=transform)
+        train_dataset = datasets.MNIST(root=train_root, train=True, download=True, transform=to_rgb)
+        test_dataset = datasets.MNIST(root=test_root, train=False, download=True, transform=to_rgb)
         HEIGHT, WIDTH = 28, 28
     elif dataset == "fashionmnist":
-        train_dataset = datasets.FashionMNIST(root=train_root, train=True, download=True, transform=transform)
-        test_dataset = datasets.FashionMNIST(root=test_root, train=False, download=True, transform=transform)
+        train_dataset = datasets.FashionMNIST(root=train_root, train=True, download=True, transform=to_rgb)
+        test_dataset = datasets.FashionMNIST(root=test_root, train=False, download=True, transform=to_rgb)
         HEIGHT, WIDTH = 28, 28
     elif dataset == "cifar":
-        train_dataset = datasets.CIFAR10(root=train_root, train=True, download=True, transform=transform)
-        test_dataset = datasets.CIFAR10(root=test_root, train=False, download=True, transform=transform)
+        train_dataset = datasets.CIFAR10(root=train_root, train=True, download=True, transform=discretize)
+        test_dataset = datasets.CIFAR10(root=test_root, train=False, download=True, transform=discretize)
         HEIGHT, WIDTH = 32, 32
     else:
         raise AttributeError("Unsupported dataset")

@@ -3,11 +3,9 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
 
-from torchvision import transforms
-
 import argparse
 import os
-from utils import str2bool, quantisize, save_samples, get_loaders, save_checkpoint
+from utils import str2bool, save_samples, get_loaders, save_checkpoint
 
 from tqdm import tqdm
 import wandb
@@ -81,7 +79,7 @@ def main():
     parser.add_argument('--hidden-ksize', type=int, default=3,
                         help='Kernel size of hidden layers convolutions')
 
-    parser.add_argument('--data-channels', type=int, default=1,
+    parser.add_argument('--data-channels', type=int, default=3,
                         help='Number of data channels')
     parser.add_argument('--color-levels', type=int, default=7,
                         help='Number of levels to quantisize value of each channel of each pixel into')
@@ -108,7 +106,6 @@ def main():
     wandb.init(project="PixelCNN")
     wandb.config.update(cfg)
 
-    LEVELS = cfg.color_levels
     EPOCHS = cfg.epochs
 
     model = PixelCNN(cfg=cfg)
@@ -116,12 +113,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() and cfg.cuda else "cpu")
     model.to(device)
 
-    transform = transforms.Compose([
-        transforms.Lambda(lambda image: quantisize(image, LEVELS)),
-        transforms.ToTensor()
-    ])
-
-    train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg.dataset, transform, cfg.batch_size, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
+    train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg.dataset, cfg.batch_size, cfg.color_levels, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
 
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate, weight_decay=cfg.weight_decay)
 

@@ -35,15 +35,7 @@ def save_samples(samples, dirname, filename):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
 
-    count = samples.size()[0]
-
-    count_sqrt = int(count ** 0.5)
-    if count_sqrt ** 2 == count:
-        nrow = count_sqrt
-    else:
-        nrow = count
-
-    save_image(samples, os.path.join(dirname, filename), nrow=nrow)
+    save_image(samples, os.path.join(dirname, filename), normalize=True)
 
 
 def get_loaders(dataset, batch_size, color_levels, train_root, test_root):

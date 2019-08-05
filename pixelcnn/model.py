@@ -32,13 +32,13 @@ class CausalBlock(nn.Module):
                                  mask_type='A',
                                  data_channels=data_channels)
 
-    def forward(self, v_in, h_in):
-        v_out, v_shifted = self.v_conv(v_in)
-        v_out += self.v_fc(v_in)
+    def forward(self, image):
+        v_out, v_shifted = self.v_conv(image)
+        v_out += self.v_fc(image)
         v_out_tanh, v_out_sigmoid = torch.split(v_out, self.split_size, dim=1)
         v_out = torch.tanh(v_out_tanh) * torch.sigmoid(v_out_sigmoid)
 
-        h_out = self.h_conv(h_in)
+        h_out = self.h_conv(image)
         v_shifted = self.v_to_h(v_shifted)
         h_out += v_shifted
         h_out_tanh, h_out_sigmoid = torch.split(h_out, self.split_size, dim=1)
@@ -89,7 +89,7 @@ class GatedBlock(nn.Module):
     def forward(self, x):
         v_in, h_in, skip, label = x[0], x[1], x[2], x[3]
 
-        label_embedded = self.label_embeddings(label).unsqueeze(2).unsqueeze(3)
+        label_embedded = self.label_embedding(label).unsqueeze(2).unsqueeze(3)
 
         v_out, v_shifted = self.v_conv(v_in)
         v_out += self.v_fc(v_in)
@@ -128,9 +128,11 @@ class PixelCNN(nn.Module):
                                        cfg.causal_ksize,
                                        data_channels=cfg.data_channels)
 
-        self.hidden_conv = nn.Sequential([
+        self.hidden_conv = nn.Sequential(
             *[GatedBlock(cfg.hidden_fmaps, cfg.hidden_fmaps, cfg.hidden_ksize, cfg.data_channels) for _ in range(cfg.hidden_layers)]
-        ])
+        )
+
+        self.label_embedding = nn.Embedding(10, self.hidden_fmaps)
 
         self.out_hidden_conv = MaskedConv2d(cfg.hidden_fmaps,
                                             cfg.out_hidden_fmaps,
@@ -147,13 +149,17 @@ class PixelCNN(nn.Module):
     def forward(self, image, label):
         count, data_channels, height, width = image.size()
 
-        v, h, _ = self.causal_conv({0: image, 1: image}).values()
+        v, h = self.causal_conv(image)
 
-        _, _, out = self.hidden_conv({0: v,
-                                      1: h,
-                                      2: image.new_zeros((count, self.hidden_fmaps, height, width), requires_grad=True),
-                                      3: label}).values()
+        _, _, out, _ = self.hidden_conv({0: v,
+                                         1: h,
+                                         2: image.new_zeros((count, self.hidden_fmaps, height, width), requires_grad=True),
+                                         3: label}).values()
 
+        label_embedded = self.label_embedding(label).unsqueeze(2).unsqueeze(3)
+
+        # add label bias
+        out += label_embedded
         out = F.relu(out)
         out = F.relu(self.out_hidden_conv(out))
         out = self.out_conv(out)
@@ -166,12 +172,13 @@ class PixelCNN(nn.Module):
         channels, height, width = shape
 
         samples = torch.zeros(count, *shape).to(device)
+        labels = torch.randint(high=10, size=(count,)).to(device)
 
         with torch.no_grad():
             for i in range(height):
                 for j in range(width):
                     for c in range(channels):
-                        unnormalized_probs = self.forward(samples)
+                        unnormalized_probs = self.forward(samples, labels)
                         pixel_probs = torch.softmax(unnormalized_probs[:, :, c, i, j], dim=1)
                         sampled_levels = torch.multinomial(pixel_probs, 1).squeeze().float() / (self.color_levels - 1)
                         samples[:, c, i, j] = sampled_levels

@@ -28,8 +28,8 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
     for images, labels in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs)):
         optimizer.zero_grad()
 
-        images.to(device, non_blocking=True)
-        labels.to(device, non_blocking=True)
+        images = images.to(device, non_blocking=True)
+        labels = labels.to(device, non_blocking=True)
 
         normalized_images = images.float() / (cfg.color_levels - 1)
 
@@ -50,8 +50,8 @@ def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
     model.eval()
     with torch.no_grad():
         for images, labels in test_loader:
-            images.to(device, non_blocking=True)
-            labels.to(device, non_blocking=True)
+            images = images.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
 
             normalized_images = images.float() / (cfg.color_levels - 1)
             outputs = model(normalized_images, labels)

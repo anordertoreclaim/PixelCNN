@@ -105,6 +105,7 @@ def main():
 
     wandb.init(project="PixelCNN")
     wandb.config.update(cfg)
+    torch.manual_seed(42)
 
     EPOCHS = cfg.epochs
 

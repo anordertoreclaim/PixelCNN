@@ -47,6 +47,8 @@ def save_samples(samples, dirname, filename):
 
 
 def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
+    normalize = transforms.Lambda(lambda image: np.array(image) / 255)
+
     discretize = transforms.Compose([
         transforms.Lambda(lambda image: quantisize(image, color_levels)),
         transforms.ToTensor()
@@ -58,7 +60,7 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
     ])
 
     dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST', 'cifar': 'CIFAR10'}
-    transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': discretize}
+    transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize])}
     hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32)}
 
     try:

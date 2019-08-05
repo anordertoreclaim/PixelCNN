@@ -49,7 +49,6 @@ class CausalConv2d(nn.Module):
         h_out += v_shifted
         h_out_tanh, h_out_sigmoid = torch.split(h_out, self.split_size, dim=1)
         h_gate = torch.tanh(h_out_tanh) * torch.sigmoid(h_out_sigmoid)
-
         h_out = self.h_fc(h_gate)
 
         return {0: v_out, 1: h_out, 2: h_gate}
@@ -68,7 +67,7 @@ class GatedBlock(CausalConv2d):
     def forward(self, x):
         v_in, h_in, skip = x[0], x[1], x[2]
 
-        # run v and h through CasualConv's forward
+        # run v and h through CausalConv's forward
         x = super(GatedBlock, self).forward(subdict(x, [0, 1]))
         v_out, h_out, h_gate = x[0], x[1], x[2]
 
@@ -86,7 +85,6 @@ class PixelCNN(nn.Module):
         super(PixelCNN, self).__init__()
 
         self.hidden_fmaps = cfg.hidden_fmaps
-
         self.color_levels = cfg.color_levels
 
         self.causal_conv = CausalConv2d(cfg.data_channels,

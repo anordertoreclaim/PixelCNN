@@ -5,15 +5,10 @@ import os
 from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-import torch
 
 
 def quantisize(image, levels):
     return np.digitize(image, np.arange(levels) / levels) - 1
-
-
-def subdict(d, keys):
-    return {k:v for k, v in d.items() if k in keys}
 
 
 def str2bool(s):
@@ -78,7 +73,3 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
 
     return train_loader, test_loader, h, w
-
-
-def save_checkpoint(state, filename):
-    torch.save(state, filename)

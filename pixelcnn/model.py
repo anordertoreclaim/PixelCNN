@@ -3,12 +3,54 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .conv_layers import MaskedConv2d, CroppedConv2d
 
-from utils import subdict
+
+class CausalBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, data_channels):
+        super(CausalBlock, self).__init__()
+        self.split_size = out_channels
+
+        self.v_conv = CroppedConv2d(in_channels,
+                                    2 * out_channels,
+                                    (kernel_size // 2 + 1, kernel_size),
+                                    padding=(kernel_size // 2 + 1, kernel_size // 2))
+        self.v_fc = nn.Conv2d(in_channels,
+                              2 * out_channels,
+                              (1, 1))
+        self.v_to_h = nn.Conv2d(2 * out_channels,
+                                2 * out_channels,
+                                (1, 1))
+
+        self.h_conv = MaskedConv2d(in_channels,
+                                   2 * out_channels,
+                                   (1, kernel_size),
+                                   mask_type='A',
+                                   data_channels=data_channels,
+                                   padding=(0, kernel_size // 2))
+        self.h_fc = MaskedConv2d(out_channels,
+                                 out_channels,
+                                 (1, 1),
+                                 mask_type='A',
+                                 data_channels=data_channels)
+
+    def forward(self, v_in, h_in):
+        v_out, v_shifted = self.v_conv(v_in)
+        v_out += self.v_fc(v_in)
+        v_out_tanh, v_out_sigmoid = torch.split(v_out, self.split_size, dim=1)
+        v_out = torch.tanh(v_out_tanh) * torch.sigmoid(v_out_sigmoid)
+
+        h_out = self.h_conv(h_in)
+        v_shifted = self.v_to_h(v_shifted)
+        h_out += v_shifted
+        h_out_tanh, h_out_sigmoid = torch.split(h_out, self.split_size, dim=1)
+        h_out = torch.tanh(h_out_tanh) * torch.sigmoid(h_out_sigmoid)
+        h_out = self.h_fc(h_out)
+
+        return v_out, h_out
 
 
-class CausalConv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, mask_type, data_channels):
-        super(CausalConv2d, self).__init__()
+class GatedBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, data_channels):
+        super(GatedBlock, self).__init__()
         self.split_size = out_channels
 
         self.v_conv = CroppedConv2d(in_channels,
@@ -21,63 +63,57 @@ class CausalConv2d(nn.Module):
         self.v_to_h = MaskedConv2d(2 * out_channels,
                                    2 * out_channels,
                                    (1, 1),
-                                   mask_type=mask_type,
+                                   mask_type='B',
                                    data_channels=data_channels)
 
         self.h_conv = MaskedConv2d(in_channels,
                                    2 * out_channels,
                                    (1, kernel_size),
-                                   mask_type=mask_type,
+                                   mask_type='B',
                                    data_channels=data_channels,
                                    padding=(0, kernel_size // 2))
         self.h_fc = MaskedConv2d(out_channels,
                                  out_channels,
                                  (1, 1),
-                                 mask_type=mask_type,
+                                 mask_type='B',
                                  data_channels=data_channels)
 
+        self.h_skip = MaskedConv2d(out_channels,
+                                   out_channels,
+                                   (1, 1),
+                                   mask_type='B',
+                                   data_channels=data_channels)
+
+        self.label_embedding = nn.Embedding(10, 2*out_channels)
+
     def forward(self, x):
-        v_in, h_in = x[0], x[1]
+        v_in, h_in, skip, label = x[0], x[1], x[2], x[3]
+
+        label_embedded = self.label_embeddings(label).unsqueeze(2).unsqueeze(3)
 
         v_out, v_shifted = self.v_conv(v_in)
         v_out += self.v_fc(v_in)
+        v_out += label_embedded
         v_out_tanh, v_out_sigmoid = torch.split(v_out, self.split_size, dim=1)
         v_out = torch.tanh(v_out_tanh) * torch.sigmoid(v_out_sigmoid)
 
         h_out = self.h_conv(h_in)
         v_shifted = self.v_to_h(v_shifted)
         h_out += v_shifted
+        h_out += label_embedded
         h_out_tanh, h_out_sigmoid = torch.split(h_out, self.split_size, dim=1)
-        h_gate = torch.tanh(h_out_tanh) * torch.sigmoid(h_out_sigmoid)
-        h_out = self.h_fc(h_gate)
-
-        return {0: v_out, 1: h_out, 2: h_gate}
-
-
-class GatedBlock(CausalConv2d):
-    def __init__(self, in_channels, out_channels, kernel_size, mask_type, data_channels):
-        super(GatedBlock, self).__init__(in_channels, out_channels, kernel_size, mask_type, data_channels)
-
-        self.h_skip = MaskedConv2d(out_channels,
-                                   out_channels,
-                                   (1, 1),
-                                   mask_type=mask_type,
-                                   data_channels=data_channels)
-
-    def forward(self, x):
-        v_in, h_in, skip = x[0], x[1], x[2]
-
-        # run v and h through CausalConv's forward
-        x = super(GatedBlock, self).forward(subdict(x, [0, 1]))
-        v_out, h_out, h_gate = x[0], x[1], x[2]
+        h_out = torch.tanh(h_out_tanh) * torch.sigmoid(h_out_sigmoid)
 
         # skip connection
-        skip = skip + self.h_skip(h_gate)
+        skip = skip + self.h_skip(h_out)
 
-        # residual connection
+        h_out = self.h_fc(h_out)
+
+        # residual connections
         h_out = h_out + h_in
+        v_out = v_out + v_in
 
-        return {0: v_out, 1: h_out, 2: skip}
+        return {0: v_out, 1: h_out, 2: skip, 3: label}
 
 
 class PixelCNN(nn.Module):
@@ -87,19 +123,14 @@ class PixelCNN(nn.Module):
         self.hidden_fmaps = cfg.hidden_fmaps
         self.color_levels = cfg.color_levels
 
-        self.causal_conv = CausalConv2d(cfg.data_channels,
-                                        cfg.hidden_fmaps,
-                                        cfg.causal_ksize,
-                                        mask_type='A',
-                                        data_channels=cfg.data_channels)
+        self.causal_conv = CausalBlock(cfg.data_channels,
+                                       cfg.hidden_fmaps,
+                                       cfg.causal_ksize,
+                                       data_channels=cfg.data_channels)
 
-        self.hidden_conv = nn.Sequential(
-            *[GatedBlock(cfg.hidden_fmaps,
-                         cfg.hidden_fmaps,
-                         cfg.hidden_ksize,
-                         mask_type='B',
-                         data_channels=cfg.data_channels) for _ in range(cfg.hidden_layers)],
-        )
+        self.hidden_conv = nn.Sequential([
+            *[GatedBlock(cfg.hidden_fmaps, cfg.hidden_fmaps, cfg.hidden_ksize, cfg.data_channels) for _ in range(cfg.hidden_layers)]
+        ])
 
         self.out_hidden_conv = MaskedConv2d(cfg.hidden_fmaps,
                                             cfg.out_hidden_fmaps,
@@ -113,12 +144,15 @@ class PixelCNN(nn.Module):
                                      mask_type='B',
                                      data_channels=cfg.data_channels)
 
-    def forward(self, x):
-        count, data_channels, height, width = x.size()
+    def forward(self, image, label):
+        count, data_channels, height, width = image.size()
 
-        v, h, _ = self.causal_conv({0: x, 1: x}).values()
+        v, h, _ = self.causal_conv({0: image, 1: image}).values()
 
-        _, _, out = self.hidden_conv({0: v, 1: h, 2: x.new_zeros((count, self.hidden_fmaps, height, width), requires_grad=True)}).values()
+        _, _, out = self.hidden_conv({0: v,
+                                      1: h,
+                                      2: image.new_zeros((count, self.hidden_fmaps, height, width), requires_grad=True),
+                                      3: label}).values()
 
         out = F.relu(out)
         out = F.relu(self.out_hidden_conv(out))

@@ -5,7 +5,7 @@ from torch.nn.utils import clip_grad_norm_
 
 import argparse
 import os
-from utils import str2bool, save_samples, get_loaders, save_checkpoint
+from utils import str2bool, save_samples, get_loaders
 
 from tqdm import tqdm
 import wandb
@@ -22,16 +22,18 @@ TRAIN_SAMPLES_DIR = 'train_samples'
 TRAIN_SAMPLES_COUNT = 9
 
 
-def train(cfg, model, device, train_loader, optimizer, epoch):
+def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
     model.train()
 
-    for images, _ in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs)):
+    for images, labels in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs)):
         optimizer.zero_grad()
 
-        images = images.to(device, non_blocking=True)
+        images.to(device, non_blocking=True)
+        labels.to(device, non_blocking=True)
+
         normalized_images = images.float() / (cfg.color_levels - 1)
 
-        outputs = model(normalized_images)
+        outputs = model(normalized_images, labels)
         loss = F.cross_entropy(outputs, images)
         loss.backward()
 
@@ -39,17 +41,20 @@ def train(cfg, model, device, train_loader, optimizer, epoch):
 
         optimizer.step()
 
+    scheduler.step()
+
 
 def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
     test_loss = 0
 
     model.eval()
     with torch.no_grad():
-        for images, _ in test_loader:
-            images = images.to(device)
+        for images, labels in test_loader:
+            images.to(device, non_blocking=True)
+            labels.to(device, non_blocking=True)
 
             normalized_images = images.float() / (cfg.color_levels - 1)
-            outputs = model(normalized_images)
+            outputs = model(normalized_images, labels)
 
             test_loss += F.cross_entropy(outputs, images, reduction='none')
 
@@ -85,7 +90,7 @@ def main():
                         help='Number of levels to quantisize value of each channel of each pixel into')
 
     parser.add_argument('--hidden-fmaps', type=int, default=128,
-                        help='Number of feature maps in hidden layer')
+                        help='Number of feature maps in hidden layer (must be divisible by 3)')
     parser.add_argument('--out-hidden-fmaps', type=int, default=32,
                         help='Number of feature maps in outer hidden layer')
     parser.add_argument('--hidden-layers', type=int, default=10,
@@ -117,21 +122,13 @@ def main():
     train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg.dataset, cfg.batch_size, cfg.color_levels, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
 
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate, weight_decay=cfg.weight_decay)
+    scheduler = optim.lr_scheduler.CyclicLR(optimizer, cfg.learning_rate, 10*cfg.learning_rate, cycle_momentum=False)
 
     wandb.watch(model)
 
     for epoch in range(EPOCHS):
-        train(cfg, model, device, train_loader, optimizer, epoch)
+        train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, epoch)
-
-        if epoch + 1 % 10 == 0:
-            if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
-                os.mkdir(MODEL_PARAMS_OUTPUT_DIR)
-            save_checkpoint({
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict()
-            }, os.path.join(MODEL_PARAMS_OUTPUT_DIR, 'epoch{}_checkpoint.pth'.format(epoch + 1)))
 
     if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
         os.mkdir(MODEL_PARAMS_OUTPUT_DIR)

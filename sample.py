@@ -49,7 +49,8 @@ def main():
 
     model.load_state_dict(torch.load(cfg.model_path))
 
-    samples = model.sample((cfg.data_channels, cfg.height, cfg.width), cfg.count, device=device)
+    label = None if cfg.label == -1 else cfg.label
+    samples = model.sample((cfg.data_channels, cfg.height, cfg.width), cfg.count, label=label, device=device)
     save_samples(samples, OUTPUT_DIRNAME, OUTPUT_FILENAME)
 
 

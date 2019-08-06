@@ -168,11 +168,14 @@ class PixelCNN(nn.Module):
 
         return out
 
-    def sample(self, shape, count, device='cuda'):
+    def sample(self, shape, count, label=None, device='cuda'):
         channels, height, width = shape
 
         samples = torch.zeros(count, *shape).to(device)
-        labels = torch.randint(high=10, size=(count,)).to(device)
+        if label is None:
+            labels = torch.randint(high=10, size=(count,)).to(device)
+        else:
+            labels = (label*torch.ones(count)).to(device)
 
         with torch.no_grad():
             for i in range(height):

@@ -19,7 +19,6 @@ MODEL_PARAMS_OUTPUT_DIR = 'model'
 MODEL_PARAMS_OUTPUT_FILENAME = 'params.pth'
 
 TRAIN_SAMPLES_DIR = 'train_samples'
-TRAIN_SAMPLES_COUNT = 9
 
 
 def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
@@ -65,7 +64,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
     })
     print("Average test loss: {}".format(test_loss))
 
-    samples = model.sample((cfg.data_channels, height, width), TRAIN_SAMPLES_COUNT, device=device)
+    samples = model.sample((cfg.data_channels, height, width), cfg.epoch_samples, device=device)
     save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))
 
 
@@ -102,6 +101,9 @@ def main():
                         help='Weight decay rate of optimizer')
     parser.add_argument('--max-norm', type=float, default=1.,
                         help='Max norm of the gradients after clipping')
+
+    parser.add_argument('--epoch-samples', type=int, default=25,
+                        help='Number of images to sample each epoch')
 
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')

@@ -145,6 +145,7 @@ optional arguments:
   --output-fname OUTPUT_FNAME
                         Name of output file (.png format)
   --label LABEL, --l LABEL
+                        Label of sampled images. -1 indicates random labels.
   --count COUNT, -c COUNT
                         Number of images to generate
   --height HEIGHT       Output image height

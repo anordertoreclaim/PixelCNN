@@ -69,7 +69,7 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
     except KeyError:
         raise AttributeError("Unsupported dataset")
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
 
     return train_loader, test_loader, h, w

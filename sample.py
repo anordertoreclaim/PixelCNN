@@ -35,7 +35,8 @@ def main():
     parser.add_argument('--output-fname', type=str, default='samples.png',
                         help='Name of output file (.png format)')
 
-    parser.add_argument('--label', '--l', type=int, default=-1)
+    parser.add_argument('--label', '--l', type=int, default=-1,
+                        help='Label of sampled images. -1 indicates random labels.')
 
     parser.add_argument('--count', '-c', type=int, default=10,
                         help='Number of images to generate')

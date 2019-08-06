@@ -68,7 +68,8 @@ usage: train.py [-h] [--epochs EPOCHS] [--batch-size BATCH_SIZE]
                 [--out-hidden-fmaps OUT_HIDDEN_FMAPS]
                 [--hidden-layers HIDDEN_LAYERS]
                 [--learning-rate LEARNING_RATE] [--weight-decay WEIGHT_DECAY]
-                [--max-norm MAX_NORM] [--cuda CUDA]
+                [--max-norm MAX_NORM] [--epoch-samples EPOCH_SAMPLES]
+                [--cuda CUDA]
 
 PixelCNN
 
@@ -89,7 +90,8 @@ optional arguments:
                         Number of levels to quantisize value of each channel
                         of each pixel into
   --hidden-fmaps HIDDEN_FMAPS
-                        Number of feature maps in hidden layer
+                        Number of feature maps in hidden layer (must be
+                        divisible by 3)
   --out-hidden-fmaps OUT_HIDDEN_FMAPS
                         Number of feature maps in outer hidden layer
   --hidden-layers HIDDEN_LAYERS
@@ -100,6 +102,8 @@ optional arguments:
   --weight-decay WEIGHT_DECAY
                         Weight decay rate of optimizer
   --max-norm MAX_NORM   Max norm of the gradients after clipping
+  --epoch-samples EPOCH_SAMPLES
+                        Number of images to sample each epoch
   --cuda CUDA           Flag indicating whether CUDA should be used
 ```
 ### Sample
@@ -113,7 +117,8 @@ usage: sample.py [-h] [--causal-ksize CAUSAL_KSIZE]
                  [--color-levels COLOR_LEVELS] [--hidden-fmaps HIDDEN_FMAPS]
                  [--out-hidden-fmaps OUT_HIDDEN_FMAPS]
                  [--hidden-layers HIDDEN_LAYERS] [--cuda CUDA]
-                 [--model-path MODEL_PATH] [--count COUNT] [--height HEIGHT]
+                 [--model-path MODEL_PATH] [--output-fname OUTPUT_FNAME]
+                 [--label LABEL] [--count COUNT] [--height HEIGHT]
                  [--width WIDTH]
 
 PixelCNN
@@ -139,13 +144,30 @@ optional arguments:
   --cuda CUDA           Flag indicating whether CUDA should be used
   --model-path MODEL_PATH, -m MODEL_PATH
                         Path to model's saved parameters
+  --output-fname OUTPUT_FNAME
+                        Name of output file (.png format)
+  --label LABEL, --l LABEL
   --count COUNT, -c COUNT
                         Number of images to generate
   --height HEIGHT       Output image height
   --width WIDTH         Output image width
 ```
 # Examples of samples
-## TODO
+Generally, in order to produce good samples, model must be quite complex. I've experimented with hyperparameters and here are the results I've managed to obtain for 2-way MNIST using different models.
+
+`python train.py --hidden-ksize 7 --hidden-layers 5 --hidden-fmaps 36 --out-hidden-fmaps 15 --max-norm 2 --color-levels 2` (quite a simple model) produced these results:
+
+![MNIST_1](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_1.png?raw=true)
+
+Here are sevens and threes respectively:
+
+![MNIST_1_7](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_1_7.png?raw=true)
+
+![MNIST_1_3](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_1_3.png?raw=true)
+
+A more complex model, `python train.py --epochs 30 --color-levels 2 --hidden-layers 5 --hidden-fmaps 60 --out-hidden-fmaps 30 --max-norm 2 --hidden-ksize 7`, managed to produce these:
+
+![MNIST_2](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_2.png?raw=true)
 
 # Future plans
 Since the architecture is a prerequisite to quite a few models, I have choices:

@@ -89,10 +89,10 @@ def main():
 
     parser.add_argument('--data-channels', type=int, default=3,
                         help='Number of data channels')
-    parser.add_argument('--color-levels', type=int, default=7,
+    parser.add_argument('--color-levels', type=int, default=2,
                         help='Number of levels to quantisize value of each channel of each pixel into')
 
-    parser.add_argument('--hidden-fmaps', type=int, default=128,
+    parser.add_argument('--hidden-fmaps', type=int, default=60,
                         help='Number of feature maps in hidden layer (must be divisible by 3)')
     parser.add_argument('--out-hidden-fmaps', type=int, default=32,
                         help='Number of feature maps in outer hidden layer')

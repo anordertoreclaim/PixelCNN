@@ -6,7 +6,6 @@ import argparse
 from utils import str2bool, save_samples
 
 OUTPUT_DIRNAME = 'samples'
-OUTPUT_FILENAME = 'samples.png'
 
 
 def main():
@@ -33,6 +32,10 @@ def main():
                         help='Flag indicating whether CUDA should be used')
     parser.add_argument('--model-path', '-m',
                         help="Path to model's saved parameters")
+    parser.add_argument('--output-fname', type=str, default='samples.png',
+                        help='Name of output file (.png format)')
+
+    parser.add_argument('--label', '--l', type=int, default=-1)
 
     parser.add_argument('--count', '-c', type=int, default=10,
                         help='Number of images to generate')
@@ -40,6 +43,7 @@ def main():
     parser.add_argument('--width', type=int, default=28, help='Output image width')
 
     cfg = parser.parse_args()
+    OUTPUT_FILENAME = cfg.output_fname
 
     model = PixelCNN(cfg=cfg)
     model.eval()

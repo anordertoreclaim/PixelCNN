@@ -134,6 +134,8 @@ def main():
 
     if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
         os.mkdir(MODEL_PARAMS_OUTPUT_DIR)
+    MODEL_PARAMS_OUTPUT_FILENAME = '{}_cks{}hks{}cl{}hfm{}ohfm{}hl{}_params.pth'\
+        .format(cfg.dataset, cfg.causal_ksize, cfg.hidden_ksize, cfg.color_levels, cfg.hidden_fmaps, cfg.out_hidden_fmaps, cfg.hidden_layers)
     torch.save(model.state_dict(), os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
 
 

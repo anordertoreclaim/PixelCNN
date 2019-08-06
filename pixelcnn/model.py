@@ -175,7 +175,7 @@ class PixelCNN(nn.Module):
         if label is None:
             labels = torch.randint(high=10, size=(count,)).to(device)
         else:
-            labels = (label*torch.ones(count)).to(device)
+            labels = (label*torch.ones(count)).to(device).long()
 
         with torch.no_grad():
             for i in range(height):

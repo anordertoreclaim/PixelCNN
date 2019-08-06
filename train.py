@@ -2,6 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
+import numpy as np
 
 import argparse
 import os
@@ -43,7 +44,7 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
     scheduler.step()
 
 
-def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
+def test_and_sample(cfg, model, device, test_loader, height, width, losses, params, epoch):
     test_loss = 0
 
     model.eval()
@@ -57,12 +58,15 @@ def test_and_sample(cfg, model, device, test_loader, height, width, epoch):
 
             test_loss += F.cross_entropy(outputs, images, reduction='none')
 
-    test_loss = test_loss.mean() / len(test_loader.dataset)
+    test_loss = test_loss.mean().cpu() / len(test_loader.dataset)
 
     wandb.log({
-        "Test loss": test_loss.cpu()
+        "Test loss": test_loss
     })
     print("Average test loss: {}".format(test_loss))
+
+    losses.append(test_loss)
+    params.append(model.state_dict())
 
     samples = model.sample((cfg.data_channels, height, width), cfg.epoch_samples, device=device)
     save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))
@@ -128,15 +132,20 @@ def main():
 
     wandb.watch(model)
 
+    losses = []
+    params = []
+
     for epoch in range(EPOCHS):
         train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
-        test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, epoch)
+        test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
+
+    best_params = params[np.argmin(np.array(losses))]
 
     if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
         os.mkdir(MODEL_PARAMS_OUTPUT_DIR)
     MODEL_PARAMS_OUTPUT_FILENAME = '{}_cks{}hks{}cl{}hfm{}ohfm{}hl{}_params.pth'\
         .format(cfg.dataset, cfg.causal_ksize, cfg.hidden_ksize, cfg.color_levels, cfg.hidden_fmaps, cfg.out_hidden_fmaps, cfg.hidden_layers)
-    torch.save(model.state_dict(), os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
+    torch.save(best_params, os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
 
 
 if __name__ == '__main__':

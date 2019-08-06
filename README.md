@@ -34,7 +34,7 @@ There are 2 types of masks: A and B. Masked convolution of type A can only see p
 </p>
 
 
-The problem with a simple masking approach was the blind spot: when predicting some pixels, a portion of the image did not influence the prediction. This was fixed by introducing 2 separate convolutions: horizontal and vertical.  Vertical convolution performs a simple unmasked convolution and sends its outputs to a horizontal convolution, which performs a masked 1-by-N convolution. They also added gates in order to increase the predicting power of the model.
+The problem with a simple masking approach was the blind spot: when predicting some pixels, a portion of the image did not influence the prediction. This was fixed by introducing 2 separate convolutions: horizontal and vertical.  Vertical convolution performs a simple unmasked convolution and sends its outputs to a horizontal convolution, which performs a masked 1-by-N convolution. They also added conditioning on labels and gates in order to increase the predicting power of the model.
 
 ## Gated block
 The main submodel of PixelCNN is a gated block, several of which are used in the network. Here is how it looks:
@@ -54,11 +54,9 @@ Skip results are summed and ran through a ReLu – 1x1 Conv – ReLu block. Then
 ### Train
 In order to train the model, use the `python train.py` command and set optional arguments if needed.
 
-Model's state dictionary is saved to `model/params.pth` by default. Samples which are generated during training are saved to `train_samples` folder by default.
+Model's state dictionary is saved to `model` folder by default. Samples which are generated during training are saved to `train_samples` folder by default.
 
-Model is checkpointed every 10 epochs.
-
-Run `wandb login` in order to monitor hardware usage and each layers' gradients.
+Run `wandb login` in order to monitor hardware usage and each layer's gradients' distribution.
 ```
 $ python train.py -h
 usage: train.py [-h] [--epochs EPOCHS] [--batch-size BATCH_SIZE]

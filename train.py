@@ -139,6 +139,8 @@ def main():
         train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
 
+    print('\nBest test loss: {}'.format(np.amin(np.array(losses))))
+    print('Best epoch: {}'.format(np.argmin(np.array(losses)) + 1))
     best_params = params[np.argmin(np.array(losses))]
 
     if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):

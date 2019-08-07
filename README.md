@@ -152,21 +152,25 @@ optional arguments:
   --width WIDTH         Output image width
 ```
 # Examples of samples
-Generally, in order to produce good samples, model must be quite complex. I've experimented with hyperparameters and here are the results I've managed to obtain for 2-way MNIST using different models.
+Generally, in order to produce good samples, model must be quite complex. However, the biggest challenge is to make the network converge to a good set of parameters. I've experimented with hyperparameters and here are the results I've managed to obtain for 2-way MNIST using different models.
 
-`python train.py --hidden-ksize 7 --hidden-layers 5 --hidden-fmaps 36 --out-hidden-fmaps 15 --max-norm 2 --color-levels 2` (quite a simple model) produced these results:
+A very simple model, `python train.py --epochs 2 --color-levels 2 --hidden-layers 6 --hidden-fmaps 21 --out-hidden-fmaps 10 --lr 0.002 --max-norm 2 --hidden-ksize 7`, trained for just 2 epochs, managed to produce these samples on a binary MNIST:
 
 ![MNIST_1](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_1.png?raw=true)
 
-Here are sevens and threes respectively:
-
-![MNIST_1_7](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_1_7.png?raw=true)
-
-![MNIST_1_3](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_1_3.png?raw=true)
-
-A more complex model, `python train.py --epochs 30 --color-levels 2 --hidden-layers 5 --hidden-fmaps 60 --out-hidden-fmaps 30 --max-norm 2 --hidden-ksize 7`, managed to produce these:
+`python train.py --hidden-ksize 7 --hidden-layers 5 --hidden-fmaps 36 --out-hidden-fmaps 15 --max-norm 2 --color-levels 2` (quite a simple model, too) produced these results:
 
 ![MNIST_2](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_2.png?raw=true)
+
+Here are sevens and threes respectively:
+
+![MNIST_2_7](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_2_7.png?raw=true)
+
+![MNIST_2_3](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_2_3.png?raw=true)
+
+A more complex model, `python train.py --color-levels 2 --hidden-layers 5 --hidden-fmaps 60 --out-hidden-fmaps 30 --max-norm 2 --hidden-ksize 7`, managed to produce these:
+
+![MNIST_3](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_3.png?raw=true)
 
 # Future plans
 Since the architecture is a prerequisite to quite a few models, I have choices:

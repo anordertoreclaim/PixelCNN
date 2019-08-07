@@ -13,19 +13,19 @@ def main():
 
     parser.add_argument('--causal-ksize', type=int, default=7,
                         help='Kernel size of causal convolution')
-    parser.add_argument('--hidden-ksize', type=int, default=3,
+    parser.add_argument('--hidden-ksize', type=int, default=7,
                         help='Kernel size of hidden layers convolutions')
 
     parser.add_argument('--data-channels', type=int, default=3,
                         help='Number of data channels')
-    parser.add_argument('--color-levels', type=int, default=7,
+    parser.add_argument('--color-levels', type=int, default=2,
                         help='Number of levels to quantisize value of each channel of each pixel into')
 
-    parser.add_argument('--hidden-fmaps', type=int, default=128,
+    parser.add_argument('--hidden-fmaps', type=int, default=30,
                         help='Number of feature maps in hidden layer')
-    parser.add_argument('--out-hidden-fmaps', type=int, default=32,
+    parser.add_argument('--out-hidden-fmaps', type=int, default=10,
                         help='Number of feature maps in outer hidden layer')
-    parser.add_argument('--hidden-layers', type=int, default=10,
+    parser.add_argument('--hidden-layers', type=int, default=6,
                         help='Number of layers of gated convolutions with mask of type "B"')
 
     parser.add_argument('--cuda', type=str2bool, default=True,
@@ -38,7 +38,7 @@ def main():
     parser.add_argument('--label', '--l', type=int, default=-1,
                         help='Label of sampled images. -1 indicates random labels.')
 
-    parser.add_argument('--count', '-c', type=int, default=10,
+    parser.add_argument('--count', '-c', type=int, default=64,
                         help='Number of images to generate')
     parser.add_argument('--height', type=int, default=28, help='Output image height')
     parser.add_argument('--width', type=int, default=28, help='Output image width')

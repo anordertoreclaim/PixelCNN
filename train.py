@@ -75,7 +75,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
 def main():
     parser = argparse.ArgumentParser(description='PixelCNN')
 
-    parser.add_argument('--epochs', type=int, default=30,
+    parser.add_argument('--epochs', type=int, default=25,
                         help='Number of epochs to train model for')
     parser.add_argument('--batch-size', type=int, default=32,
                         help='Number of images per mini-batch')
@@ -84,7 +84,7 @@ def main():
 
     parser.add_argument('--causal-ksize', type=int, default=7,
                         help='Kernel size of causal convolution')
-    parser.add_argument('--hidden-ksize', type=int, default=3,
+    parser.add_argument('--hidden-ksize', type=int, default=7,
                         help='Kernel size of hidden layers convolutions')
 
     parser.add_argument('--data-channels', type=int, default=3,
@@ -92,14 +92,14 @@ def main():
     parser.add_argument('--color-levels', type=int, default=2,
                         help='Number of levels to quantisize value of each channel of each pixel into')
 
-    parser.add_argument('--hidden-fmaps', type=int, default=60,
+    parser.add_argument('--hidden-fmaps', type=int, default=30,
                         help='Number of feature maps in hidden layer (must be divisible by 3)')
-    parser.add_argument('--out-hidden-fmaps', type=int, default=32,
+    parser.add_argument('--out-hidden-fmaps', type=int, default=10,
                         help='Number of feature maps in outer hidden layer')
-    parser.add_argument('--hidden-layers', type=int, default=10,
+    parser.add_argument('--hidden-layers', type=int, default=6,
                         help='Number of layers of gated convolutions with mask of type "B"')
 
-    parser.add_argument('--learning-rate', '--lr', type=float, default=0.001,
+    parser.add_argument('--learning-rate', '--lr', type=float, default=0.0002,
                         help='Learning rate of optimizer')
     parser.add_argument('--weight-decay', type=float, default=0.0001,
                         help='Weight decay rate of optimizer')

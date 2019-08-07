@@ -152,7 +152,7 @@ optional arguments:
   --width WIDTH         Output image width
 ```
 # Examples of samples
-Generally, in order to produce good samples, model must be quite complex. However, the biggest challenge is to make the network converge to a good set of parameters. I've experimented with hyperparameters and here are the results I've managed to obtain for 2-way MNIST using different models.
+Generally, in order to produce good samples, model must be quite complex. However, the biggest challenge is to make the network converge to a good set of parameters. I've experimented with hyperparameters and here are the results I've managed to obtain for N-way MNIST using different models.
 
 A very simple model, `python train.py --epochs 2 --color-levels 2 --hidden-layers 6 --hidden-fmaps 21 --out-hidden-fmaps 10 --lr 0.002 --max-norm 2 --hidden-ksize 7`, trained for just 2 epochs, managed to produce these samples on a binary MNIST:
 

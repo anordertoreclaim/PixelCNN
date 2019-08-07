@@ -99,7 +99,7 @@ def main():
     parser.add_argument('--hidden-layers', type=int, default=6,
                         help='Number of layers of gated convolutions with mask of type "B"')
 
-    parser.add_argument('--learning-rate', '--lr', type=float, default=0.0002,
+    parser.add_argument('--learning-rate', '--lr', type=float, default=0.0001,
                         help='Learning rate of optimizer')
     parser.add_argument('--weight-decay', type=float, default=0.0001,
                         help='Weight decay rate of optimizer')

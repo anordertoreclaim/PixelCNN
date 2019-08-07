@@ -154,7 +154,7 @@ optional arguments:
 # Examples of samples
 The biggest challenge is to make the network converge to a good set of parameters. I've experimented with hyperparameters and here are the results I've managed to obtain for N-way MNIST using different models.
 
-Generally, in order for model to converge to a good set of parameters, one needs to go with a small learning rate (in order of 1e-4). I've also found that bigger kernel sizes work best for hidden layers.
+Generally, in order for model to converge to a good set of parameters, one needs to go with a small learning rate (about 1e-4). I've also found that bigger kernel sizes in hidden layers work better.
 
 A very simple model, `python train.py --epochs 2 --color-levels 2 --hidden-fmaps 21 --lr 0.002 --max-norm 2` (all others are default values), trained for just 2 epochs, managed to produce these samples on a binary MNIST:
 

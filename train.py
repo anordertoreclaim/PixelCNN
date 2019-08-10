@@ -87,8 +87,6 @@ def main():
     parser.add_argument('--hidden-ksize', type=int, default=7,
                         help='Kernel size of hidden layers convolutions')
 
-    parser.add_argument('--data-channels', type=int, default=3,
-                        help='Number of data channels')
     parser.add_argument('--color-levels', type=int, default=2,
                         help='Number of levels to quantisize value of each channel of each pixel into')
 

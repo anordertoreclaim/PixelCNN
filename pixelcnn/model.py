@@ -120,16 +120,18 @@ class PixelCNN(nn.Module):
     def __init__(self, cfg):
         super(PixelCNN, self).__init__()
 
+        DATA_CHANNELS = 3
+
         self.hidden_fmaps = cfg.hidden_fmaps
         self.color_levels = cfg.color_levels
 
-        self.causal_conv = CausalBlock(cfg.data_channels,
+        self.causal_conv = CausalBlock(DATA_CHANNELS,
                                        cfg.hidden_fmaps,
                                        cfg.causal_ksize,
-                                       data_channels=cfg.data_channels)
+                                       data_channels=DATA_CHANNELS)
 
         self.hidden_conv = nn.Sequential(
-            *[GatedBlock(cfg.hidden_fmaps, cfg.hidden_fmaps, cfg.hidden_ksize, cfg.data_channels) for _ in range(cfg.hidden_layers)]
+            *[GatedBlock(cfg.hidden_fmaps, cfg.hidden_fmaps, cfg.hidden_ksize, DATA_CHANNELS) for _ in range(cfg.hidden_layers)]
         )
 
         self.label_embedding = nn.Embedding(10, self.hidden_fmaps)
@@ -138,13 +140,13 @@ class PixelCNN(nn.Module):
                                             cfg.out_hidden_fmaps,
                                             (1, 1),
                                             mask_type='B',
-                                            data_channels=cfg.data_channels)
+                                            data_channels=DATA_CHANNELS)
 
         self.out_conv = MaskedConv2d(cfg.out_hidden_fmaps,
-                                     cfg.data_channels * cfg.color_levels,
+                                     DATA_CHANNELS * cfg.color_levels,
                                      (1, 1),
                                      mask_type='B',
-                                     data_channels=cfg.data_channels)
+                                     data_channels=DATA_CHANNELS)
 
     def forward(self, image, label):
         count, data_channels, height, width = image.size()

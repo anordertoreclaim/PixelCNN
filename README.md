@@ -82,8 +82,6 @@ optional arguments:
                         Kernel size of causal convolution
   --hidden-ksize HIDDEN_KSIZE
                         Kernel size of hidden layers convolutions
-  --data-channels DATA_CHANNELS
-                        Number of data channels
   --color-levels COLOR_LEVELS
                         Number of levels to quantisize value of each channel
                         of each pixel into
@@ -127,8 +125,6 @@ optional arguments:
                         Kernel size of causal convolution
   --hidden-ksize HIDDEN_KSIZE
                         Kernel size of hidden layers convolutions
-  --data-channels DATA_CHANNELS
-                        Number of data channels
   --color-levels COLOR_LEVELS
                         Number of levels to quantisize value of each channel
                         of each pixel into

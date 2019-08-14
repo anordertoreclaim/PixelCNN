@@ -163,10 +163,3 @@ A very simple model, `python train.py --epochs 2 --color-levels 2 --hidden-fmaps
 A more complex model, `python train.py --color-levels 10 --hidden-fmaps 120 --out-hidden-fmaps 60 --lr 0.0002`, managed to produce these on a 10-way MNIST:
 
 ![MNIST_3](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_3.png?raw=true)
-
-# Future plans
-Since the architecture is a prerequisite to quite a few models, I have choices:
-* implement a conditional variant of the model;
-* implement a PixelCNN++ architecture;
-* might look into PixelVAE;
-* dive into WaveNet.

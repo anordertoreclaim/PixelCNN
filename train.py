@@ -68,7 +68,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
     losses.append(test_loss)
     params.append(model.state_dict())
 
-    samples = model.sample((cfg.data_channels, height, width), cfg.epoch_samples, device=device)
+    samples = model.sample((3, height, width), cfg.epoch_samples, device=device)
     save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))
 
 

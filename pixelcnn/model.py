@@ -78,16 +78,16 @@ class GatedBlock(nn.Module):
                                  mask_type='B',
                                  data_channels=data_channels)
 
-        self.h_skip = MaskedConv2d(out_channels,
-                                   out_channels,
-                                   (1, 1),
-                                   mask_type='B',
-                                   data_channels=data_channels)
+        #self.h_skip = MaskedConv2d(out_channels,
+                                   #out_channels,
+                                   #(1, 1),
+                                   #mask_type='B',
+                                   #data_channels=data_channels)
 
         self.label_embedding = nn.Embedding(10, 2*out_channels)
 
     def forward(self, x):
-        v_in, h_in, skip, label = x[0], x[1], x[2], x[3]
+        v_in, h_in, label = x[0], x[1], x[2]
 
         label_embedded = self.label_embedding(label).unsqueeze(2).unsqueeze(3)
 
@@ -105,7 +105,8 @@ class GatedBlock(nn.Module):
         h_out = torch.tanh(h_out_tanh) * torch.sigmoid(h_out_sigmoid)
 
         # skip connection
-        skip = skip + self.h_skip(h_out)
+        #skip = skip + self.h_skip(h_out)
+        skip = h_out
 
         h_out = self.h_fc(h_out)
 
@@ -113,7 +114,7 @@ class GatedBlock(nn.Module):
         h_out = h_out + h_in
         v_out = v_out + v_in
 
-        return {0: v_out, 1: h_out, 2: skip, 3: label}
+        return {0: v_out, 1: h_out, 2: label}
 
 
 class PixelCNN(nn.Module):
@@ -134,7 +135,7 @@ class PixelCNN(nn.Module):
             *[GatedBlock(cfg.hidden_fmaps, cfg.hidden_fmaps, cfg.hidden_ksize, DATA_CHANNELS) for _ in range(cfg.hidden_layers)]
         )
 
-        self.label_embedding = nn.Embedding(10, self.hidden_fmaps)
+        #self.label_embedding = nn.Embedding(10, self.hidden_fmaps)
 
         self.out_hidden_conv = MaskedConv2d(cfg.hidden_fmaps,
                                             cfg.out_hidden_fmaps,
@@ -153,15 +154,14 @@ class PixelCNN(nn.Module):
 
         v, h = self.causal_conv(image)
 
-        _, _, out, _ = self.hidden_conv({0: v,
-                                         1: h,
-                                         2: image.new_zeros((count, self.hidden_fmaps, height, width), requires_grad=True),
-                                         3: label}).values()
+        _, out, _ = self.hidden_conv({0: v,
+                                        1: h,
+                                        2: label}).values()
 
-        label_embedded = self.label_embedding(label).unsqueeze(2).unsqueeze(3)
+        #label_embedded = self.label_embedding(label).unsqueeze(2).unsqueeze(3)
 
         # add label bias
-        out += label_embedded
+        #out += label_embedded
         out = F.relu(out)
         out = F.relu(self.out_hidden_conv(out))
         out = self.out_conv(out)

@@ -163,3 +163,5 @@ A very simple model, `python train.py --epochs 2 --color-levels 2 --hidden-fmaps
 A more complex model, `python train.py --color-levels 10 --hidden-fmaps 120 --out-hidden-fmaps 60 --lr 0.0002`, managed to produce these on a 10-way MNIST:
 
 ![MNIST_3](https://github.com/anordertoreclaim/PixelCNN/blob/master/.images/mnist_samples_3.png?raw=true)
+
+### I was trying to train the network on CIFAR-10, but I haven't managed to get any meaningful results. If you have, please contact me.

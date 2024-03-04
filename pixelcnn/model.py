@@ -179,6 +179,7 @@ class PixelCNN(nn.Module):
         else:
             labels = (label*torch.ones(count)).to(device).long()
 
+        # Modify this to only do masked pixels
         with torch.no_grad():
             for i in range(height):
                 for j in range(width):

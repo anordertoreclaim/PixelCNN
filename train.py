@@ -33,9 +33,12 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
 
         normalized_images = images.float() / (cfg.color_levels - 1)
 
+        *_, img_c, img_h, img_w = images.shape
+        mask = torch.ones((img_c, img_h, img_w), dtype=torch.float).to(device)
         outputs = model(normalized_images, labels)
-        loss = F.cross_entropy(outputs, images)
-        loss.backward()
+        loss = F.cross_entropy(outputs, images, reduction="none")
+        masked_loss = loss * mask.unsqueeze(0).unsqueeze(0)
+        torch.mean(masked_loss).backward()
 
         clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
 

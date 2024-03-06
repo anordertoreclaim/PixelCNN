@@ -183,6 +183,7 @@ def main():
     # save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(0 + 1))
     for epoch in range(EPOCHS):
         train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
+        torch.save(model.state_dict(), os.path.join(MODEL_PARAMS_OUTPUT_DIR, f"ep{epoch+1}"+MODEL_PARAMS_OUTPUT_FILENAME))
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
 
     print('\nBest test loss: {}'.format(np.amin(np.array(losses))))

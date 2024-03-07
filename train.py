@@ -179,6 +179,8 @@ def main():
     losses = []
     params = []
 
+    # samples = model.sample((3, HEIGHT, WIDTH), cfg.epoch_samples, device=device)
+    # save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(0 + 1))
     for epoch in range(EPOCHS):
         train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)

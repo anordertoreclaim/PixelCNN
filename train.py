@@ -69,8 +69,21 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
     test_loss = 0
 
     model.eval()
+    HAS_LABELS = None
     with torch.no_grad():
-        for images, labels in test_loader:
+        for data in test_loader:
+            if HAS_LABELS is None:
+                HAS_LABELS=True
+                try:
+                    images, labels = data
+                except ValueError:
+                    print("Assuming deeplake dataset with no labels")
+                    HAS_LABELS=False
+            if HAS_LABELS:
+                images, labels = data
+            else:
+                images = data['images']
+                labels = torch.zeros((images.shape[0],)).to(torch.int64)
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
 

@@ -1,4 +1,5 @@
 import torch
+import deeplake
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
@@ -24,12 +25,24 @@ TRAIN_SAMPLES_DIR = 'train_samples'
 
 def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
     model.train()
+    HAS_LABELS = None
 
-    for images, labels in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs)):
+    for data in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs)):
+        if HAS_LABELS is None:
+            HAS_LABELS=True
+            try:
+                images, labels = data
+            except ValueError:
+                print("Assuming deeplake dataset with no labels")
+                HAS_LABELS=False
+        if HAS_LABELS:
+            images, labels = data
+        else:
+            images = data['images']
+            labels = torch.zeros((images.shape[0],)).to(torch.int64)
         optimizer.zero_grad()
 
         images = images.to(device, non_blocking=True)
-        # labels = torch.zeros((images.shape[0],)).to(torch.int64)
         labels = labels.to(device, non_blocking=True)
 
         normalized_images = images.float() / (cfg.color_levels - 1)

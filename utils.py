@@ -54,8 +54,15 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
         transforms.Lambda(lambda image_tensor: image_tensor.repeat(3, 1, 1))
     ])
 
+
     dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST', 'cifar': 'CIFAR10', 'celeba':'CelebA'}
-    transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize]), 'celeba':transforms.Compose([normalize, discretize])}
+    transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize]),
+         'celeba':transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize((218,178)),
+            normalize,
+            discretize
+            ])}
     hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (218, 178)}
 
     try:
@@ -63,10 +70,14 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
         transform = transform_mappings[dataset_name]
 
         if dataset == "CelebA":
-            dataset_path = ".data/celeba/"
-            print("Loading dataset",dataset_path)
-            train_dataset = getattr(datasets, dataset)(root=dataset_path, split="train", download=True, transform=transform)
-            test_dataset = getattr(datasets, dataset)(root=dataset_path, split="valid", download=True, transform=transform)
+            # dataset_path = ".data/celeba/"
+            # print("Loading dataset",dataset_path)
+            # train_dataset = getattr(datasets, dataset)(root=dataset_path, split="train", download=True, transform=transform)
+            # test_dataset = getattr(datasets, dataset)(root=dataset_path, split="valid", download=True, transform=transform)
+            import deeplake
+            train_loader = deeplake.load("hub://activeloop/celeb-a-train").pytorch(num_workers=0, batch_size=batch_size, transform = {"images": transform}, shuffle=False, decode_method="pil")
+            test_loader = deeplake.load("hub://activeloop/celeb-a-test").pytorch(num_workers=0, batch_size=batch_size, transform = {"images": transform}, shuffle=False, decode_method="pil")
+
         else:
             train_dataset = getattr(datasets, dataset)(root=train_root, train=True, download=True, transform=transform)
             test_dataset = getattr(datasets, dataset)(root=test_root, train=False, download=True, transform=transform)
@@ -75,7 +86,8 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
     except KeyError:
         raise AttributeError("Unsupported dataset")
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
+    if dataset != "CelebA":
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
 
     return train_loader, test_loader, h, w

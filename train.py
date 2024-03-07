@@ -128,9 +128,6 @@ def main():
     parser.add_argument('--epoch-samples', type=int, default=25,
                         help='Number of images to sample each epoch')
 
-    parser.add_argument('--dataloader-limit', type=int, default=25,
-                        help='Number of images to sample each epoch')
-
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
 

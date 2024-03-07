@@ -53,7 +53,7 @@ model = PixelCNN(cfg=cfg)
 model.to(device)
 
 run = wandb.init()
-artifact = run.use_artifact('pixelcnn/PixelCNN/model:v1',type='model')
+artifact = run.use_artifact('pixelcnn/PixelCNN/model:v2',type='model')
 print(artifact)
 artifact_dir = os.path.join(artifact.download(),"mnist_cks7hks7cl2hfm30ohfm10hl6_params.pth")
 print("?",artifact_dir)

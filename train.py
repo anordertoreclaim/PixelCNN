@@ -29,6 +29,7 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
         optimizer.zero_grad()
 
         images = images.to(device, non_blocking=True)
+        # labels = torch.zeros((images.shape[0],)).to(torch.int64)
         labels = labels.to(device, non_blocking=True)
 
         normalized_images = images.float() / (cfg.color_levels - 1)
@@ -127,6 +128,9 @@ def main():
     model.to(device)
 
     train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg.dataset, cfg.batch_size, cfg.color_levels, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
+    # for b in test_loader:
+    #     print(b[0].size())
+    #     exit()
 
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate, weight_decay=cfg.weight_decay)
     scheduler = optim.lr_scheduler.CyclicLR(optimizer, cfg.learning_rate, 10*cfg.learning_rate, cycle_momentum=False)

@@ -56,7 +56,7 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
 
     dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST', 'cifar': 'CIFAR10', 'celeba':'CelebA'}
     transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize]), 'celeba':transforms.Compose([normalize, discretize])}
-    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (178, 218)}
+    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (218, 178)}
 
     try:
         dataset = dataset_mappings[dataset_name]

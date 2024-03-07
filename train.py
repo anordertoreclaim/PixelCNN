@@ -128,6 +128,9 @@ def main():
     parser.add_argument('--epoch-samples', type=int, default=25,
                         help='Number of images to sample each epoch')
 
+    parser.add_argument('--use-artifact', type=str,
+                        help="artifact name from wandb to use instead of default model")
+
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
 
@@ -138,8 +141,14 @@ def main():
     torch.manual_seed(42)
 
     EPOCHS = cfg.epochs
+    MODEL_PARAMS_OUTPUT_FILENAME = '{}_cks{}hks{}cl{}hfm{}ohfm{}hl{}_params.pth'\
+        .format(cfg.dataset, cfg.causal_ksize, cfg.hidden_ksize, cfg.color_levels, cfg.hidden_fmaps, cfg.out_hidden_fmaps, cfg.hidden_layers)
 
     model = PixelCNN(cfg=cfg)
+    if cfg.use_artifact:
+        artifact = run.use_artifact(cfg.use_artifact,type='model')
+        artifact_dir = os.path.join(artifact.download(),MODEL_PARAMS_OUTPUT_FILENAME)
+        model.load_state_dict(torch.load(artifact_dir))
 
     device = torch.device("cuda" if torch.cuda.is_available() and cfg.cuda else "cpu")
     model.to(device)
@@ -167,8 +176,6 @@ def main():
 
     if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
         os.mkdir(MODEL_PARAMS_OUTPUT_DIR)
-    MODEL_PARAMS_OUTPUT_FILENAME = '{}_cks{}hks{}cl{}hfm{}ohfm{}hl{}_params.pth'\
-        .format(cfg.dataset, cfg.causal_ksize, cfg.hidden_ksize, cfg.color_levels, cfg.hidden_fmaps, cfg.out_hidden_fmaps, cfg.hidden_layers)
     torch.save(best_params, os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
     artifact = wandb.Artifact("model", type='model')
     artifact.add_file(os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))

@@ -40,7 +40,6 @@ def save_samples(samples, dirname, filename):
 
     save_image(samples, os.path.join(dirname, filename), nrow=nrow)
 
-
 def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
     normalize = transforms.Lambda(lambda image: np.array(image) / 255)
 

@@ -170,7 +170,7 @@ class PixelCNN(nn.Module):
 
         return out
 
-    def sample(self, shape, count, label=None, device='cuda'):
+    def sample(self, shape, count, label=None, device='cuda', pbar=True):
         channels, height, width = shape
 
         samples = torch.zeros(count, *shape).to(device)
@@ -178,7 +178,9 @@ class PixelCNN(nn.Module):
             labels = torch.randint(high=10, size=(count,)).to(device)
         else:
             labels = (label*torch.ones(count)).to(device).long()
-
+        if pbar:
+            from tqdm import tqdm
+            pbar = tqdm(total=height*width*channels)
         # Modify this to only do masked pixels
         with torch.no_grad():
             for i in range(height):
@@ -188,5 +190,9 @@ class PixelCNN(nn.Module):
                         pixel_probs = torch.softmax(unnormalized_probs[:, :, c, i, j], dim=1)
                         sampled_levels = torch.multinomial(pixel_probs, 1).squeeze().float() / (self.color_levels - 1)
                         samples[:, c, i, j] = sampled_levels
+                        if pbar:
+                            pbar.update(1)
+        if pbar:
+            pbar.close()
 
         return samples

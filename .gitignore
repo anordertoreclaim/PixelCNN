@@ -6,3 +6,5 @@ venv
 wandb
 train_samples
 .vscode
+artifacts
+model

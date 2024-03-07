@@ -128,12 +128,15 @@ def main():
     parser.add_argument('--epoch-samples', type=int, default=25,
                         help='Number of images to sample each epoch')
 
+    parser.add_argument('--dataloader-limit', type=int, default=25,
+                        help='Number of images to sample each epoch')
+
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
 
     cfg = parser.parse_args()
 
-    wandb.init(project="PixelCNN")
+    run = wandb.init(project="PixelCNN")
     wandb.config.update(cfg)
     torch.manual_seed(42)
 
@@ -170,7 +173,10 @@ def main():
     MODEL_PARAMS_OUTPUT_FILENAME = '{}_cks{}hks{}cl{}hfm{}ohfm{}hl{}_params.pth'\
         .format(cfg.dataset, cfg.causal_ksize, cfg.hidden_ksize, cfg.color_levels, cfg.hidden_fmaps, cfg.out_hidden_fmaps, cfg.hidden_layers)
     torch.save(best_params, os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
-
+    artifact = wandb.Artifact("model", type='model')
+    artifact.add_file(os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
+    run.log_artifact(artifact)
+    run.finish()
 
 if __name__ == '__main__':
     main()

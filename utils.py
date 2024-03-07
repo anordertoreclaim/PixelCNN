@@ -55,14 +55,14 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
 
 
     dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST', 'cifar': 'CIFAR10', 'celeba':'CelebA'}
+    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (50,50)}
     transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize]),
          'celeba':transforms.Compose([
             # transforms.ToPILImage(),
-            transforms.Resize((218,178)),
+            transforms.Resize(hw_mappings['celeba']),
             normalize,
             discretize
             ])}
-    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (218, 178)}
 
     try:
         dataset = dataset_mappings[dataset_name]

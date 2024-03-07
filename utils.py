@@ -54,16 +54,22 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
         transforms.Lambda(lambda image_tensor: image_tensor.repeat(3, 1, 1))
     ])
 
-    dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST', 'cifar': 'CIFAR10'}
-    transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize])}
-    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32)}
+    dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST', 'cifar': 'CIFAR10', 'celeba':'CelebA'}
+    transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize]), 'celeba':transforms.Compose([normalize, discretize])}
+    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (178, 218)}
 
     try:
         dataset = dataset_mappings[dataset_name]
         transform = transform_mappings[dataset_name]
 
-        train_dataset = getattr(datasets, dataset)(root=train_root, train=True, download=True, transform=transform)
-        test_dataset = getattr(datasets, dataset)(root=test_root, train=False, download=True, transform=transform)
+        if dataset == "CelebA":
+            dataset_path = ".data/celeba/"
+            print("Loading dataset",dataset_path)
+            train_dataset = getattr(datasets, dataset)(root=dataset_path, split="train", download=True, transform=transform)
+            test_dataset = getattr(datasets, dataset)(root=dataset_path, split="valid", download=True, transform=transform)
+        else:
+            train_dataset = getattr(datasets, dataset)(root=train_root, train=True, download=True, transform=transform)
+            test_dataset = getattr(datasets, dataset)(root=test_root, train=False, download=True, transform=transform)
 
         h, w = hw_mappings[dataset_name]
     except KeyError:

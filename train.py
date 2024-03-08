@@ -67,22 +67,10 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
         outputs = model(normalized_images, labels)
         loss = F.cross_entropy(outputs, images)
         loss.backward()
-
-        clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
+        if not cfg.overfit:
+            clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
 
         optimizer.step()
-        # if cfg.overfit:
-        #     for _ in range(100):
-        #         optimizer.zero_grad()
-        #         outputs = model(normalized_images, labels)
-        #         loss = F.cross_entropy(outputs, images)
-        #         loss.backward()
-
-        #         clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
-
-        #         optimizer.step()
-
-    # if cfg.overfit == False:
     scheduler.step()
 
 
@@ -268,6 +256,9 @@ def main():
     # samples = model.sample((3, HEIGHT, WIDTH), cfg.epoch_samples, device=device)
     # save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(0 + 1))
     for epoch in range(EPOCHS):
+        if cfg.overfit:
+            for _ in range(100):
+                train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
         train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
         saveModel(run, model, cfg, "model/train_epoch_{}".format(epoch+1),data={"epoch":epoch+1})

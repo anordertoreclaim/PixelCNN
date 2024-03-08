@@ -4,6 +4,7 @@ import os
 import pickle
 import os
 from pixelcnn import PixelCNN
+import wandb
 
 import torch
 from torchvision.utils import save_image
@@ -109,6 +110,7 @@ def get_loaders(cfg, train_root, test_root):
                 "decode_method":{"images":"pil"},
                 "collate_fn":labeled_collate_fn,
                 "drop_last":True,
+                "memory_cache_size":16000,
             }
             ds_kwargs = {
                 "read_only":True,

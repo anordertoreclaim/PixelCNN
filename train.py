@@ -172,8 +172,9 @@ def main():
 			for _ in range(100):
 				train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
 		train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
-		saveModel(run, model, cfg, "model/train_epoch_{}".format(epoch+1),data={"epoch":epoch+1})
+		saveModel(None, model, cfg, "model/train_epoch_{}".format(epoch+1),data={"epoch":epoch+1})
 		test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
+		saveModel(run, model, cfg, "model/test_epoch_{}".format(epoch+1),data={"epoch":epoch+1, "loss":losses[-1]})
 
 	print('\nBest test loss: {}'.format(np.amin(np.array(losses))))
 	print('Best epoch: {}'.format(np.argmin(np.array(losses)) + 1))
@@ -182,7 +183,7 @@ def main():
 	if not os.path.exists(MODEL_PARAMS_OUTPUT_DIR):
 		os.mkdir(MODEL_PARAMS_OUTPUT_DIR)
 	torch.save(best_params, os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
-	artifact = wandb.Artifact("model", type='model')
+	artifact = wandb.Artifact("trained_model", type='model')
 	artifact.add_file(os.path.join(MODEL_PARAMS_OUTPUT_DIR, MODEL_PARAMS_OUTPUT_FILENAME))
 	run.log_artifact(artifact)
 	run.finish()

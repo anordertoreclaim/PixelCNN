@@ -108,6 +108,7 @@ def get_loaders(cfg, train_root, test_root):
                 "shuffle":False,
                 "decode_method":{"images":"pil"},
                 "collate_fn":labeled_collate_fn,
+                "drop_last":True,
             }
             ds_kwargs = {
                 "read_only":True,

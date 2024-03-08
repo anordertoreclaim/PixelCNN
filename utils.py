@@ -82,7 +82,11 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
                 "use_local_cache":True,
                 "transform":{"images": transform},
                 "shuffle":False,
-                "decode_method":{"images":"pil"}
+                "decode_method":{"images":"pil"},
+            }
+            ds_kwargs = {
+                "read_only":True,
+                "check_integrity":True,
             }
             train_loader = deeplake.load("hub://activeloop/celeb-a-train").pytorch(**deeplake_kwargs)
             test_loader = deeplake.load("hub://activeloop/celeb-a-test").pytorch(**deeplake_kwargs)

@@ -9,7 +9,7 @@ def getCFG():
 	parser.add_argument('--batch-size', type=int, default=32,
 						help='Number of images per mini-batch')
 	parser.add_argument('--dataset', type=str, default='mnist',
-						help='Dataset to train model on. Either mnist, fashionmnist or cifar.')
+						help='Dataset to train model on. Either mnist, fashionmnist, cifar or celeba.')
 
 	parser.add_argument('--causal-ksize', type=int, default=7,
 						help='Kernel size of causal convolution')
@@ -19,6 +19,8 @@ def getCFG():
 	parser.add_argument('--color-levels', type=int, default=2,
 						help='Number of levels to quantisize value of each channel of each pixel into')
 
+	parser.add_argument('--classes', type=int, default=10,
+						help="number of classes in the dataset")
 	parser.add_argument('--hidden-fmaps', type=int, default=30,
 						help='Number of feature maps in hidden layer (must be divisible by 3)')
 	parser.add_argument('--out-hidden-fmaps', type=int, default=10,
@@ -50,4 +52,6 @@ def getCFG():
 						help='If this flag is set, train will be set to whatever test is')
 
 	cfg = parser.parse_args()
+	if cfg.dataset == "celeba":
+		cfg.classes = 1
 	return cfg

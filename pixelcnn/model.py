@@ -84,7 +84,7 @@ class GatedBlock(nn.Module):
                                    mask_type='B',
                                    data_channels=data_channels)
 
-        self.label_embedding = nn.Embedding(10, 2*out_channels)
+        self.label_embedding = nn.Embedding(cfg.classes, 2*out_channels)
 
     def forward(self, x):
         v_in, h_in, skip, label = x[0], x[1], x[2], x[3]
@@ -134,7 +134,7 @@ class PixelCNN(nn.Module):
             *[GatedBlock(cfg.hidden_fmaps, cfg.hidden_fmaps, cfg.hidden_ksize, DATA_CHANNELS) for _ in range(cfg.hidden_layers)]
         )
 
-        self.label_embedding = nn.Embedding(10, self.hidden_fmaps)
+        self.label_embedding = nn.Embedding(cfg.classes, self.hidden_fmaps)
 
         self.out_hidden_conv = MaskedConv2d(cfg.hidden_fmaps,
                                             cfg.out_hidden_fmaps,
@@ -170,12 +170,12 @@ class PixelCNN(nn.Module):
 
         return out
 
-    def sample(self, shape, count, label=1, device='cuda', pbar=True):
+    def sample(self, shape, count, label=None, device='cuda', pbar=True):
         channels, height, width = shape
 
         samples = torch.zeros(count, *shape).to(device)
         if label is None:
-            labels = torch.randint(high=10, size=(count,)).to(device)
+            labels = torch.randint(high=cfg.classes, size=(count,)).to(device)
         else:
             labels = (label*torch.ones(count)).to(device).long()
         # print("generating with labels",labels)

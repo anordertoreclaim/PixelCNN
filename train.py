@@ -33,40 +33,41 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
     model.train()
     HAS_LABELS = None
 
-    for data in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs).ljust(20)):
-        if HAS_LABELS is None:
-            HAS_LABELS=True
-            try:
+    for _ in range(25):
+        for data in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs).ljust(20)):
+            if HAS_LABELS is None:
+                HAS_LABELS=True
+                try:
+                    images, labels = data
+                except ValueError:
+                    tqdm.write("Assuming deeplake dataset with no labels")
+                    HAS_LABELS=False
+            if HAS_LABELS:
                 images, labels = data
-            except ValueError:
-                tqdm.write("Assuming deeplake dataset with no labels")
-                HAS_LABELS=False
-        if HAS_LABELS:
-            images, labels = data
-        else:
-            images = data['images']
-            labels = torch.zeros((images.shape[0],)).to(torch.int64)
-        optimizer.zero_grad()
+            else:
+                images = data['images']
+                labels = torch.zeros((images.shape[0],)).to(torch.int64)
+            optimizer.zero_grad()
 
-        images = images.to(device, non_blocking=True)
-        labels = labels.to(device, non_blocking=True)
+            images = images.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
 
-        normalized_images = images.float() / (cfg.color_levels - 1)
+            normalized_images = images.float() / (cfg.color_levels - 1)
 
-        # *_, img_c, img_h, img_w = images.shape
-        # mask = torch.ones((img_c, img_h, img_w), dtype=torch.float).to(device)
-        # outputs = model(normalized_images, labels)
-        # loss = F.cross_entropy(outputs, images, reduction="none")
-        # masked_loss = loss * mask.unsqueeze(0).unsqueeze(0)
-        # torch.mean(masked_loss).backward()
+            # *_, img_c, img_h, img_w = images.shape
+            # mask = torch.ones((img_c, img_h, img_w), dtype=torch.float).to(device)
+            # outputs = model(normalized_images, labels)
+            # loss = F.cross_entropy(outputs, images, reduction="none")
+            # masked_loss = loss * mask.unsqueeze(0).unsqueeze(0)
+            # torch.mean(masked_loss).backward()
 
-        outputs = model(normalized_images, labels)
-        loss = F.cross_entropy(outputs, images)
-        loss.backward()
+            outputs = model(normalized_images, labels)
+            loss = F.cross_entropy(outputs, images)
+            loss.backward()
 
-        clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
+            clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
 
-        optimizer.step()
+            optimizer.step()
 
     scheduler.step()
 
@@ -76,6 +77,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
 
     model.eval()
     HAS_LABELS = None
+    saveflag=True # turn on to save a batch
     with torch.no_grad():
         for data in tqdm(test_loader, desc="Testing".ljust(20)):
             if HAS_LABELS is None:
@@ -94,6 +96,9 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
             labels = labels.to(device, non_blocking=True)
 
             normalized_images = images.float() / (cfg.color_levels - 1)
+            if saveflag:
+                saveflag = False
+                save_samples(normalized_images,"samples","test_images.png")
             outputs = model(normalized_images, labels)
 
             test_loss += F.cross_entropy(outputs, images, reduction='none')
@@ -111,16 +116,30 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
     samples = model.sample((3, height, width), cfg.epoch_samples, device=device)
     save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))
 
+def delete_contents(directory_path):
+    assert "model/train" in directory_path, "Careful, trying to delete a non model/train folder"
+    try:
+        for item in os.listdir(directory_path):
+            item_path = os.path.join(directory_path, item)
+            if os.path.isfile(item_path):
+                os.remove(item_path)
+                # print("remove",item_path)
+        print(f"Contents of directory '{directory_path}' have been successfully deleted.")
+    except Exception as e:
+        print(f"Error occurred while deleting contents of directory '{directory_path}': {e}")
+
 def saveModel(run, model, cfg, path, data=None):
     if not os.path.exists(path):
         os.makedirs(path)
+    else:
+        delete_contents(path)
     if data is not None:
         with open(os.path.join(path,"data.pkl"), 'wb') as f:
             pickle.dump(data, f)
     with open(os.path.join(path,"cfg.pkl"), 'wb') as f:
         pickle.dump(cfg, f)
     torch.save(model.state_dict(), os.path.join(path, "model_state_dict.pth"))
-    if run is not None:
+    if run is not None and cfg.upload:
         artifact = wandb.Artifact(f"{cfg.dataset}_model", type='model')
         artifact.add_dir(local_path=path)
         run.log_artifact(artifact)
@@ -187,6 +206,8 @@ def main():
 
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
+    parser.add_argument('--upload', type=str2bool, default=False,
+                        help='Flag indicating whether or not to upload each train to wandb')
 
     cfg = parser.parse_args()
 

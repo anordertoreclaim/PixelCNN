@@ -40,7 +40,11 @@ def save_samples(samples, dirname, filename):
 
     save_image(samples, os.path.join(dirname, filename), nrow=nrow)
 
-def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
+def get_loaders(cfg, train_root, test_root):
+    dataset_name = cfg.dataset
+    batch_size = cfg.batch_size
+    color_levels = cfg.color_levels
+
     normalize = transforms.Lambda(lambda image: np.array(image) / 255)
 
     discretize = transforms.Compose([
@@ -88,13 +92,20 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
                 "read_only":True,
                 "check_integrity":True,
             }
-            train_loader = deeplake.load("hub://activeloop/celeb-a-train").pytorch(**deeplake_kwargs)
-            test_loader = deeplake.load("hub://activeloop/celeb-a-test").pytorch(**deeplake_kwargs)
+            # train_loader = deeplake.load("hub://activeloop/celeb-a-train").pytorch(**deeplake_kwargs)
+            # test_loader = deeplake.load("hub://activeloop/celeb-a-test").pytorch(**deeplake_kwargs)
+            train_ds = deeplake.load("hub://activeloop/celeb-a-train", **ds_kwargs)
+            test_ds = deeplake.load("hub://activeloop/celeb-a-test", **ds_kwargs)
+            if cfg.dataset_size is not None:
+                train_ds, _ = train_ds.random_split([cfg.dataset_size, len(train_ds)-cfg.dataset_size])
+                test_ds, _ = test_ds.random_split([cfg.dataset_size, len(test_ds)-cfg.dataset_size])
+            train_loader = train_ds.pytorch(**deeplake_kwargs)
+            test_loader = test_ds.pytorch(**deeplake_kwargs)
         elif dataset == "CelebA-Faces":
             from datasets import load_dataset
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             ds=load_dataset("nielsr/CelebA-faces",split="train").with_format("torch",device=device)
-            # TODO
+            # TODO: Use hugginface repo for datasets
         else:
             train_dataset = getattr(datasets, dataset)(root=train_root, train=True, download=True, transform=transform)
             test_dataset = getattr(datasets, dataset)(root=test_root, train=False, download=True, transform=transform)

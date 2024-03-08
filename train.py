@@ -146,8 +146,11 @@ def main():
     parser.add_argument('--epoch-samples', type=int, default=25,
                         help='Number of images to sample each epoch')
 
+    parser.add_argument('--dataset-size', type=int,
+                        help='Number of max images to use for dataset sizes (Note: only implemented for CelebA)')
+
     parser.add_argument('--use-artifact', type=str,
-                        help="artifact name from wandb to use instead of default model")
+                        help="artifact name from wandb to use instead of default model") # TODO: test
 
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
@@ -171,7 +174,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() and cfg.cuda else "cpu")
     model.to(device)
 
-    train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg.dataset, cfg.batch_size, cfg.color_levels, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
+    # train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg.dataset, cfg.batch_size, cfg.color_levels, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
+    train_loader, test_loader, HEIGHT, WIDTH = get_loaders(cfg, TRAIN_DATASET_ROOT, TEST_DATASET_ROOT)
     # for b in test_loader:
     #     print(b[0].size())
     #     exit()

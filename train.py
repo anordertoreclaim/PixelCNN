@@ -124,6 +124,9 @@ def saveModel(run, model, cfg, path, data=None):
         artifact = wandb.Artifact(f"{cfg.dataset}_model", type='model')
         artifact.add_dir(local_path=path)
         run.log_artifact(artifact)
+        print("Saved model to wandb")
+    else:
+        print("Saved model locally to",path)
 
 def loadArtifactModel(run, artifactName):
     artifact = run.use_artifact(artifactName)
@@ -225,7 +228,7 @@ def main():
     for epoch in range(EPOCHS):
         train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
-        saveModel(run, model, cfg, "model/train_epoch_{}".format(epoch+1),data={"epoch":epoch})
+        saveModel(run, model, cfg, "model/train_epoch_{}".format(epoch+1),data={"epoch":epoch+1})
 
     print('\nBest test loss: {}'.format(np.amin(np.array(losses))))
     print('Best epoch: {}'.format(np.argmin(np.array(losses)) + 1))

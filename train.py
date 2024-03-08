@@ -174,7 +174,7 @@ def main():
 		train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
 		saveModel(None, model, cfg, "model/train_epoch_{}".format(epoch+1),data={"epoch":epoch+1})
 		test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
-		saveModel(run, model, cfg, "model/test_epoch_{}".format(epoch+1),data={"epoch":epoch+1, "loss":losses[-1]})
+		saveModel(run, model, cfg, "model/test_epoch_{}".format(epoch+1),data={"epoch":epoch+1, "loss":losses[-1].item()})
 
 	print('\nBest test loss: {}'.format(np.amin(np.array(losses))))
 	print('Best epoch: {}'.format(np.argmin(np.array(losses)) + 1))

@@ -1,4 +1,5 @@
 import torch
+import pickle
 import deeplake
 import torch.optim as optim
 import torch.nn.functional as F
@@ -32,7 +33,7 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
     model.train()
     HAS_LABELS = None
 
-    for data in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs)):
+    for data in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs).ljust(20)):
         if HAS_LABELS is None:
             HAS_LABELS=True
             try:
@@ -76,7 +77,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
     model.eval()
     HAS_LABELS = None
     with torch.no_grad():
-        for data in tqdm(test_loader, desc="Testing: "):
+        for data in tqdm(test_loader, desc="Testing".ljust(20)):
             if HAS_LABELS is None:
                 HAS_LABELS=True
                 try:
@@ -110,6 +111,35 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
     samples = model.sample((3, height, width), cfg.epoch_samples, device=device)
     save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))
 
+def saveModel(run, model, cfg, path, data=None):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    if data is not None:
+        with open(os.path.join(path,"data.pkl"), 'wb') as f:
+            pickle.dump(data, f)
+    with open(os.path.join(path,"cfg.pkl"), 'wb') as f:
+        pickle.dump(cfg, f)
+    torch.save(model.state_dict(), os.path.join(path, "model_state_dict.pth"))
+    if run is not None:
+        artifact = wandb.Artifact(f"{cfg.dataset}_model", type='model')
+        artifact.add_dir(local_path=path)
+        run.log_artifact(artifact)
+
+def loadArtifactModel(run, artifactName):
+    artifact = run.use_artifact(artifactName)
+    path = artifact.download()
+    with open(os.path.join(path, "cfg.pkl"), 'rb') as f:
+        cfg = pickle.load(f)
+    model = PixelCNN(cfg=cfg)  # Instantiate your model class here
+    model.load_state_dict(torch.load(os.path.join(path, "model_state_dict.pth")))
+
+    data = None
+    data_path = os.path.join(path, "data.pkl")
+    if os.path.exists(data_path):
+        with open(data_path, 'rb') as f:
+            data = pickle.load(f)
+    
+    return model, cfg, data
 
 def main():
     parser = argparse.ArgumentParser(description='PixelCNN')
@@ -165,11 +195,13 @@ def main():
     MODEL_PARAMS_OUTPUT_FILENAME = '{}_cks{}hks{}cl{}hfm{}ohfm{}hl{}_params.pth'\
         .format(cfg.dataset, cfg.causal_ksize, cfg.hidden_ksize, cfg.color_levels, cfg.hidden_fmaps, cfg.out_hidden_fmaps, cfg.hidden_layers)
 
-    model = PixelCNN(cfg=cfg)
     if cfg.use_artifact:
-        artifact = run.use_artifact(cfg.use_artifact,type='model')
-        artifact_dir = os.path.join(artifact.download(),MODEL_PARAMS_OUTPUT_FILENAME)
-        model.load_state_dict(torch.load(artifact_dir))
+        # artifact = run.use_artifact(cfg.use_artifact,type='model')
+        # artifact_dir = os.path.join(artifact.download(),MODEL_PARAMS_OUTPUT_FILENAME)
+        # model.load_state_dict(torch.load(artifact_dir))
+        model, artifact_cfg, data = loadArtifactModel(run, cfg.use_artifact)
+    else:
+        model = PixelCNN(cfg=cfg)
 
     device = torch.device("cuda" if torch.cuda.is_available() and cfg.cuda else "cpu")
     model.to(device)
@@ -192,8 +224,8 @@ def main():
     # save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(0 + 1))
     for epoch in range(EPOCHS):
         train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
-        torch.save(model.state_dict(), os.path.join(MODEL_PARAMS_OUTPUT_DIR, f"ep{epoch+1}"+MODEL_PARAMS_OUTPUT_FILENAME))
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
+        saveModel(run, model, cfg, "model/train_epoch_{}".format(epoch+1),data={"epoch":epoch})
 
     print('\nBest test loss: {}'.format(np.amin(np.array(losses))))
     print('Best epoch: {}'.format(np.argmin(np.array(losses)) + 1))

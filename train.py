@@ -33,7 +33,7 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
     model.train()
     HAS_LABELS = None
 
-    saveflag=True # turn on to save a batch
+    saveflag=False # turn on to save a batch
     for data in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs).ljust(20)):
         if HAS_LABELS is None:
             HAS_LABELS=True
@@ -79,7 +79,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
 
     model.eval()
     HAS_LABELS = None
-    saveflag=True # turn on to save a batch
+    saveflag=False # turn on to save a batch
     with torch.no_grad():
         for data in tqdm(test_loader, desc="Testing".ljust(20)):
             if HAS_LABELS is None:
@@ -115,7 +115,11 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
     losses.append(test_loss)
     params.append(model.state_dict())
 
-    samples = model.sample((3, height, width), cfg.epoch_samples, label=5, device=device)
+    if cfg.dataset == "mnist":
+        samples = model.sample((3, height, width), cfg.epoch_samples, label=None, device=device)
+    else:
+        samples = model.sample((3, height, width), cfg.epoch_samples, device=device)
+    
     save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))
 
 def delete_contents(directory_path):

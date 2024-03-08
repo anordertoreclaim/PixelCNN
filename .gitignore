@@ -8,3 +8,5 @@ train_samples
 .vscode
 artifacts
 model
+samples/test_images.png
+samples/train_images.png

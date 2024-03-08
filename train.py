@@ -201,7 +201,7 @@ def main():
     parser.add_argument('--max-norm', type=float, default=1.,
                         help='Max norm of the gradients after clipping')
 
-    parser.add_argument('--epoch-samples', type=int, default=25,
+    parser.add_argument('--epoch-samples', type=int, default=9,
                         help='Number of images to sample each epoch')
 
     parser.add_argument('--dataset-size', type=int,

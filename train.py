@@ -132,12 +132,14 @@ def main():
     MODEL_PARAMS_OUTPUT_FILENAME = '{}_cks{}hks{}cl{}hfm{}ohfm{}hl{}_params.pth'\
         .format(cfg.dataset, cfg.causal_ksize, cfg.hidden_ksize, cfg.color_levels, cfg.hidden_fmaps, cfg.out_hidden_fmaps, cfg.hidden_layers)
 
+	epoch_offset = 0
     if cfg.use_artifact:
         # artifact = run.use_artifact(cfg.use_artifact,type='model')
         # artifact_dir = os.path.join(artifact.download(),MODEL_PARAMS_OUTPUT_FILENAME)
         # model.load_state_dict(torch.load(artifact_dir))
         model, artifact_cfg, data = loadArtifactModel(run, cfg.use_artifact)
         print("Loaded artifact from",cfg.use_artifact)
+        epoch_offset = data['epoch']
     else:
         model = PixelCNN(cfg=cfg)
 
@@ -165,12 +167,13 @@ def main():
     # samples = model.sample((3, HEIGHT, WIDTH), cfg.epoch_samples, device=device)
     # save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(0 + 1))
     for epoch in range(EPOCHS):
+        epoch+=epoch_offset
         if cfg.overfit:
             for _ in range(100):
                 train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
         train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
-        test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
         saveModel(run, model, cfg, "model/train_epoch_{}".format(epoch+1),data={"epoch":epoch+1, "loss":losses[-1]})
+        test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
 
     print('\nBest test loss: {}'.format(np.amin(np.array(losses))))
     print('Best epoch: {}'.format(np.argmin(np.array(losses)) + 1))

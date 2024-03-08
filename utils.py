@@ -57,7 +57,7 @@ def save_samples(samples, dirname, filename):
 
 def labeled_collate_fn(batch):
     data = [b['images'] for b in batch]
-    labels = torch.ones(len(batch), dtype=torch.int32)
+    labels = torch.zeros(len(batch), dtype=torch.int32)
     return torch.stack(data), labels
 
 def get_loaders(cfg, train_root, test_root):

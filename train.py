@@ -12,6 +12,11 @@ from utils import str2bool, save_samples, get_loaders
 from tqdm import tqdm
 import wandb
 
+# This is to hack some issue with PIL images - see
+# https://wandb.ai/pixelcnn/PixelCNN/runs/lfa9h4h9
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 from pixelcnn import PixelCNN
 
 TRAIN_DATASET_ROOT = '.data/train/'
@@ -182,7 +187,7 @@ def main():
     # samples = model.sample((3, HEIGHT, WIDTH), cfg.epoch_samples, device=device)
     # save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(0 + 1))
     for epoch in range(EPOCHS):
-        train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
+        # train(cfg, model, device, train_loader, optimizer, scheduler, epoch)
         test_and_sample(cfg, model, device, test_loader, HEIGHT, WIDTH, losses, params, epoch)
 
     print('\nBest test loss: {}'.format(np.amin(np.array(losses))))

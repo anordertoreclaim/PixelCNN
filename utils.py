@@ -145,3 +145,39 @@ def get_loaders(cfg, train_root, test_root):
         test_loader = train_loader
 
     return train_loader, test_loader, h, w
+
+
+def saveModel(run, model, cfg, path, data=None):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    else:
+        delete_contents(path)
+    if data is not None:
+        with open(os.path.join(path,"data.pkl"), 'wb') as f:
+            pickle.dump(data, f)
+    with open(os.path.join(path,"cfg.pkl"), 'wb') as f:
+        pickle.dump(cfg, f)
+    torch.save(model.state_dict(), os.path.join(path, "model_state_dict.pth"))
+    if run is not None and cfg.upload:
+        artifact = wandb.Artifact(f"{cfg.dataset}_model", type='model')
+        artifact.add_dir(local_path=path)
+        run.log_artifact(artifact)
+        print("Saved model to wandb")
+    else:
+        print("Saved model locally to",path)
+
+def loadArtifactModel(run, artifactName):
+    artifact = run.use_artifact(artifactName)
+    path = artifact.download()
+    with open(os.path.join(path, "cfg.pkl"), 'rb') as f:
+        cfg = pickle.load(f)
+    model = PixelCNN(cfg=cfg)  # Instantiate your model class here
+    model.load_state_dict(torch.load(os.path.join(path, "model_state_dict.pth")))
+
+    data = None
+    data_path = os.path.join(path, "data.pkl")
+    if os.path.exists(data_path):
+        with open(data_path, 'rb') as f:
+            data = pickle.load(f)
+    
+    return model, cfg, data

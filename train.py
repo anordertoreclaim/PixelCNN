@@ -33,7 +33,7 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
             try:
                 images, labels = data
             except ValueError:
-                print("Assuming deeplake dataset with no labels")
+                tqdm.write("Assuming deeplake dataset with no labels")
                 HAS_LABELS=False
         if HAS_LABELS:
             images, labels = data

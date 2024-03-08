@@ -55,7 +55,7 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
 
 
     dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST', 'cifar': 'CIFAR10', 'celeba':'CelebA'}
-    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (50,50)}
+    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (32,32)}
     transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize]),
          'celeba':transforms.Compose([
             # transforms.ToPILImage(),
@@ -81,10 +81,14 @@ def get_loaders(dataset_name, batch_size, color_levels, train_root, test_root):
                 "use_local_cache":True,
                 "transform":{"images": transform},
                 "shuffle":False,
-                "decode_method":{"images":"pil"}
+                "decode_method":{"images":"pil"},
             }
-            train_loader = deeplake.load("hub://activeloop/celeb-a-train").pytorch(**deeplake_kwargs)
-            test_loader = deeplake.load("hub://activeloop/celeb-a-test").pytorch(**deeplake_kwargs)
+            ds_kwargs = {
+                "read_only":True,
+                "check_integrity":True,
+            }
+            train_loader = deeplake.load("hub://activeloop/celeb-a-train", **ds_kwargs).pytorch(**deeplake_kwargs)
+            test_loader = deeplake.load("hub://activeloop/celeb-a-test", **ds_kwargs).pytorch(**deeplake_kwargs)
 
         else:
             train_dataset = getattr(datasets, dataset)(root=train_root, train=True, download=True, transform=transform)

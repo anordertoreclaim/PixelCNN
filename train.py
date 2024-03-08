@@ -33,42 +33,56 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
     model.train()
     HAS_LABELS = None
 
-    for _ in range(25):
-        for data in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs).ljust(20)):
-            if HAS_LABELS is None:
-                HAS_LABELS=True
-                try:
-                    images, labels = data
-                except ValueError:
-                    tqdm.write("Assuming deeplake dataset with no labels")
-                    HAS_LABELS=False
-            if HAS_LABELS:
+    saveflag=True # turn on to save a batch
+    for data in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs).ljust(20)):
+        if HAS_LABELS is None:
+            HAS_LABELS=True
+            try:
                 images, labels = data
-            else:
-                images = data['images']
-                labels = torch.zeros((images.shape[0],)).to(torch.int64)
-            optimizer.zero_grad()
+            except ValueError:
+                tqdm.write("Assuming deeplake dataset with no labels")
+                HAS_LABELS=False
+        if HAS_LABELS:
+            images, labels = data
+        else:
+            images = data['images']
+            labels = torch.zeros((images.shape[0],)).to(torch.int64)
 
-            images = images.to(device, non_blocking=True)
-            labels = labels.to(device, non_blocking=True)
+        images = images.to(device, non_blocking=True)
+        labels = labels.to(device, non_blocking=True)
 
-            normalized_images = images.float() / (cfg.color_levels - 1)
+        normalized_images = images.float() / (cfg.color_levels - 1)
+        if saveflag:
+            saveflag = False
+            save_samples(normalized_images,"samples","train_images.png")
 
-            # *_, img_c, img_h, img_w = images.shape
-            # mask = torch.ones((img_c, img_h, img_w), dtype=torch.float).to(device)
-            # outputs = model(normalized_images, labels)
-            # loss = F.cross_entropy(outputs, images, reduction="none")
-            # masked_loss = loss * mask.unsqueeze(0).unsqueeze(0)
-            # torch.mean(masked_loss).backward()
+        # *_, img_c, img_h, img_w = images.shape
+        # mask = torch.ones((img_c, img_h, img_w), dtype=torch.float).to(device)
+        # outputs = model(normalized_images, labels)
+        # loss = F.cross_entropy(outputs, images, reduction="none")
+        # masked_loss = loss * mask.unsqueeze(0).unsqueeze(0)
+        # torch.mean(masked_loss).backward()
 
-            outputs = model(normalized_images, labels)
-            loss = F.cross_entropy(outputs, images)
-            loss.backward()
+        optimizer.zero_grad()
+        outputs = model(normalized_images, labels)
+        loss = F.cross_entropy(outputs, images)
+        loss.backward()
 
-            clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
+        clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
 
-            optimizer.step()
+        optimizer.step()
+        # if cfg.overfit:
+        #     for _ in range(100):
+        #         optimizer.zero_grad()
+        #         outputs = model(normalized_images, labels)
+        #         loss = F.cross_entropy(outputs, images)
+        #         loss.backward()
 
+        #         clip_grad_norm_(model.parameters(), max_norm=cfg.max_norm)
+
+        #         optimizer.step()
+
+    # if cfg.overfit == False:
     scheduler.step()
 
 
@@ -113,7 +127,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
     losses.append(test_loss)
     params.append(model.state_dict())
 
-    samples = model.sample((3, height, width), cfg.epoch_samples, device=device)
+    samples = model.sample((3, height, width), cfg.epoch_samples, label=5, device=device)
     save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))
 
 def delete_contents(directory_path):
@@ -206,8 +220,10 @@ def main():
 
     parser.add_argument('--cuda', type=str2bool, default=True,
                         help='Flag indicating whether CUDA should be used')
-    parser.add_argument('--upload', type=str2bool, default=False,
+    parser.add_argument('--upload', action="store_true",
                         help='Flag indicating whether or not to upload each train to wandb')
+    parser.add_argument('--overfit', action="store_true",
+                        help='If this flag is set, train will be set to whatever test is')
 
     cfg = parser.parse_args()
 
@@ -224,6 +240,7 @@ def main():
         # artifact_dir = os.path.join(artifact.download(),MODEL_PARAMS_OUTPUT_FILENAME)
         # model.load_state_dict(torch.load(artifact_dir))
         model, artifact_cfg, data = loadArtifactModel(run, cfg.use_artifact)
+        print("Loaded artifact from",cfg.use_artifact)
     else:
         model = PixelCNN(cfg=cfg)
 
@@ -236,6 +253,10 @@ def main():
     #     print(b[0].size())
     #     exit()
 
+    # if cfg.overfit:
+    #     cfg.learning_rate = .9
+    #     cfg.weight_decay=0
+    #     cfg.max_norm=9e9
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate, weight_decay=cfg.weight_decay)
     scheduler = optim.lr_scheduler.CyclicLR(optimizer, cfg.learning_rate, 10*cfg.learning_rate, cycle_momentum=False)
 

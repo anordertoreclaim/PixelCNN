@@ -170,7 +170,7 @@ class PixelCNN(nn.Module):
 
         return out
 
-    def sample(self, shape, count, label=None, device='cuda', pbar=True):
+    def sample(self, shape, count, label=1, device='cuda', pbar=True):
         channels, height, width = shape
 
         samples = torch.zeros(count, *shape).to(device)
@@ -178,6 +178,7 @@ class PixelCNN(nn.Module):
             labels = torch.randint(high=10, size=(count,)).to(device)
         else:
             labels = (label*torch.ones(count)).to(device).long()
+        # print("generating with labels",labels)
         if pbar:
             from tqdm import tqdm
             pbar = tqdm(total=height*width*channels, desc="Generating samples: ".ljust(20))

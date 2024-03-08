@@ -54,7 +54,7 @@ def save_samples(samples, dirname, filename):
 
 def labeled_collate_fn(batch):
     data = [b['images'] for b in batch]
-    labels = torch.zeros(len(batch), dtype=torch.int32)
+    labels = torch.ones(len(batch), dtype=torch.int32)
     return torch.stack(data), labels
 
 def get_loaders(cfg, train_root, test_root):
@@ -140,5 +140,8 @@ def get_loaders(cfg, train_root, test_root):
     else:
         train_loader = train_dataset.pytorch(**deeplake_kwargs)
         test_loader = test_dataset.pytorch(**deeplake_kwargs)
+    
+    if cfg.overfit:
+        test_loader = train_loader
 
     return train_loader, test_loader, h, w

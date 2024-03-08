@@ -1,6 +1,9 @@
 import numpy as np
 import argparse
 import os
+import pickle
+import os
+from pixelcnn import PixelCNN
 
 import torch
 from torchvision.utils import save_image
@@ -145,6 +148,18 @@ def get_loaders(cfg, train_root, test_root):
         test_loader = train_loader
 
     return train_loader, test_loader, h, w
+
+def delete_contents(directory_path):
+    assert "model/train" in directory_path, "Careful, trying to delete a non model/train folder"
+    try:
+        for item in os.listdir(directory_path):
+            item_path = os.path.join(directory_path, item)
+            if os.path.isfile(item_path):
+                os.remove(item_path)
+                # print("remove",item_path)
+        print(f"Contents of directory '{directory_path}' have been successfully deleted.")
+    except Exception as e:
+        print(f"Error occurred while deleting contents of directory '{directory_path}': {e}")
 
 
 def saveModel(run, model, cfg, path, data=None):

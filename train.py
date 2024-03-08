@@ -123,18 +123,6 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
     
     save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(epoch + 1))
 
-def delete_contents(directory_path):
-    assert "model/train" in directory_path, "Careful, trying to delete a non model/train folder"
-    try:
-        for item in os.listdir(directory_path):
-            item_path = os.path.join(directory_path, item)
-            if os.path.isfile(item_path):
-                os.remove(item_path)
-                # print("remove",item_path)
-        print(f"Contents of directory '{directory_path}' have been successfully deleted.")
-    except Exception as e:
-        print(f"Error occurred while deleting contents of directory '{directory_path}': {e}")
-
 def main():
     run = wandb.init(project="PixelCNN")
     wandb.config.update(cfg)

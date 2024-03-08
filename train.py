@@ -76,7 +76,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
     model.eval()
     HAS_LABELS = None
     with torch.no_grad():
-        for data in test_loader:
+        for data in tqdm(test_loader, desc="Testing: "):
             if HAS_LABELS is None:
                 HAS_LABELS=True
                 try:

@@ -180,7 +180,7 @@ class PixelCNN(nn.Module):
             labels = (label*torch.ones(count)).to(device).long()
         if pbar:
             from tqdm import tqdm
-            pbar = tqdm(total=height*width*channels)
+            pbar = tqdm(total=height*width*channels, desc="Generating samples: ")
         # Modify this to only do masked pixels
         with torch.no_grad():
             for i in range(height):

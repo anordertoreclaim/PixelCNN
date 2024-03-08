@@ -3,7 +3,7 @@ import argparse
 import os
 
 from torchvision.utils import save_image
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader,Dataset
 from torchvision import datasets, transforms
 
 
@@ -39,6 +39,17 @@ def save_samples(samples, dirname, filename):
         nrow = count
 
     save_image(samples, os.path.join(dirname, filename), nrow=nrow)
+
+class LabeledDataset(Dataset):
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        data = self.dataset[index]['images']
+        return data, 0  # Adding label 0 to each data sample
 
 def get_loaders(cfg, train_root, test_root):
     dataset_name = cfg.dataset
@@ -94,13 +105,15 @@ def get_loaders(cfg, train_root, test_root):
             }
             # train_loader = deeplake.load("hub://activeloop/celeb-a-train").pytorch(**deeplake_kwargs)
             # test_loader = deeplake.load("hub://activeloop/celeb-a-test").pytorch(**deeplake_kwargs)
-            train_ds = deeplake.load("hub://activeloop/celeb-a-train", **ds_kwargs)
-            test_ds = deeplake.load("hub://activeloop/celeb-a-test", **ds_kwargs)
+            train_dataset = deeplake.load("hub://activeloop/celeb-a-train", **ds_kwargs)
+            test_dataset = deeplake.load("hub://activeloop/celeb-a-test", **ds_kwargs)
             if cfg.dataset_size is not None:
-                train_ds, _ = train_ds.random_split([cfg.dataset_size, len(train_ds)-cfg.dataset_size])
-                test_ds, _ = test_ds.random_split([cfg.dataset_size, len(test_ds)-cfg.dataset_size])
-            train_loader = train_ds.pytorch(**deeplake_kwargs)
-            test_loader = test_ds.pytorch(**deeplake_kwargs)
+                train_dataset, _ = train_dataset.random_split([cfg.dataset_size, len(train_dataset)-cfg.dataset_size])
+                test_dataset, _ = test_dataset.random_split([cfg.dataset_size, len(test_dataset)-cfg.dataset_size])
+            train_dataset = LabeledDataset(train_dataset)
+            test_dataset = LabeledDataset(test_dataset)
+            # train_loader = train_dataset.pytorch(**deeplake_kwargs)
+            # test_loader = test_dataset.pytorch(**deeplake_kwargs)
         elif dataset == "CelebA-Faces":
             from datasets import load_dataset
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -114,8 +127,8 @@ def get_loaders(cfg, train_root, test_root):
     except KeyError:
         raise AttributeError("Unsupported dataset")
 
-    if dataset != "CelebA":
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
+    # if dataset != "CelebA":
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
 
     return train_loader, test_loader, h, w

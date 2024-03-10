@@ -81,7 +81,7 @@ def get_loaders(cfg, train_root, test_root):
 
     dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST',
      'cifar': 'CIFAR10', 'celeba':'CelebA', 'celeba-faces':'CelebA-Faces'}
-    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (32,32)}
+    hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (50,50)}
     transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize]),
          'celeba':transforms.Compose([
             # transforms.ToPILImage(),
@@ -153,7 +153,7 @@ def get_loaders(cfg, train_root, test_root):
     return train_loader, test_loader, h, w
 
 def delete_contents(directory_path):
-    assert "model/train" in directory_path, "Careful, trying to delete a non model/train folder"
+    assert "model/" in directory_path, "Careful, trying to delete a non model/train folder ({})".format(directory_path)
     try:
         for item in os.listdir(directory_path):
             item_path = os.path.join(directory_path, item)

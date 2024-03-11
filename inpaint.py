@@ -3,6 +3,7 @@ import pickle
 import deeplake
 import torch.optim as optim
 import torch.nn.functional as F
+from torchvision import transforms
 from torch.nn.utils import clip_grad_norm_
 import numpy as np
 
@@ -30,7 +31,6 @@ TRAIN_SAMPLES_DIR = 'train_samples'
 
 cfg = getCFG()
 cfg.save_sample = True
-
 def inpaint_test(cfg, model, device, test_loader):
 	test_loss = 0
 
@@ -42,7 +42,8 @@ def inpaint_test(cfg, model, device, test_loader):
 			images = images.to(device, non_blocking=True)
 			labels = labels.to(device, non_blocking=True)
 			mask = torch.zeros(images.shape[1:]).to(device,non_blocking=True)
-			mask[:,10:20,10:20]=1
+			mask[:,5:25,5:25]=1
+			mask[:,10:20,10:20]=0
 			C,H,W =mask.shape
 			mask = mask.unsqueeze(0).expand(images.shape[0],C,H,W)
 			red_mask = torch.clone(mask)
@@ -51,7 +52,7 @@ def inpaint_test(cfg, model, device, test_loader):
 			normalized_images = images.float() / (cfg.color_levels - 1)
 			if saveflag:
 				saveflag = False
-			outputs = model.inpaint(normalized_images,mask, labels)
+			outputs = model.inpaint(normalized_images*(1-mask),mask, labels)
 			save_rows([normalized_images, normalized_images*(1-mask)+red_mask, outputs], "samples", "inpainted.png")
 			# save_samples(normalized_images,"samples","ip_unmasked.png")
 			# save_samples(normalized_images*(1-mask),"samples","ip_masked.png")

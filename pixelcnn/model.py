@@ -212,13 +212,18 @@ class PixelCNN(nn.Module):
         with torch.no_grad():
             for i in range(height):
                 for j in range(width):
-                    for c in range(channels):
-                        unnormalized_probs = self.forward(samples, labels)
-                        pixel_probs = torch.softmax(unnormalized_probs[:, :, c, i, j], dim=1)
-                        sampled_levels = torch.multinomial(pixel_probs, 1).squeeze().float() / (self.color_levels - 1)
-                        samples[:, c, i, j] = sampled_levels * masks[:, c, i, j] + images[:,c,i,j]*(1-masks[:,c,i,j])
+                    if torch.all(masks[:,:,i,j] < 0.1):
+                        samples[:,:,i,j] = images[:,:,i,j]
                         if pbar:
-                            pbar.update(1)
+                            pbar.update(channels)
+                    else:
+                        for c in range(channels):
+                            unnormalized_probs = self.forward(samples, labels)
+                            pixel_probs = torch.softmax(unnormalized_probs[:, :, c, i, j], dim=1)
+                            sampled_levels = torch.multinomial(pixel_probs, 1).squeeze().float() / (self.color_levels - 1)
+                            samples[:, c, i, j] = sampled_levels * masks[:, c, i, j] + images[:,c,i,j]*(1-masks[:,c,i,j])
+                            if pbar:
+                                pbar.update(1)
         if pbar:
             pbar.close()
 

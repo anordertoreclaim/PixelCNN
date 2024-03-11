@@ -11,6 +11,10 @@ from torchvision.utils import save_image
 from torch.utils.data import DataLoader,Dataset,Subset
 from torchvision import datasets, transforms
 
+def flip(img):
+	img = transforms.functional.hflip(img)
+	img = transforms.functional.vflip(img)
+	return img
 
 def quantisize(image, levels):
 	return np.digitize(image, np.arange(levels) / levels) - 1
@@ -37,6 +41,7 @@ def save_rows(arr_samples, dirname, filename):
 	count = arr_samples[0].size()[0]
 	arr_samples = torch.cat(arr_samples,dim=0)
 	nrow=count
+	arr_samples = flip(arr_samples)
 	save_image(arr_samples, os.path.join(dirname, filename),nrow=nrow)
 
 def save_samples(samples, dirname, filename):
@@ -81,6 +86,13 @@ def get_loaders(cfg, train_root, test_root):
 		transforms.ToTensor()
 	])
 
+	flipped = transforms.Compose([
+		discretize,
+		transforms.functional.hflip,
+		transforms.functional.vflip,
+		transforms.Lambda(lambda image_tensor: image_tensor.repeat(3, 1, 1))
+	])
+
 	to_rgb = transforms.Compose([
 		discretize,
 		transforms.Lambda(lambda image_tensor: image_tensor.repeat(3, 1, 1))
@@ -89,12 +101,13 @@ def get_loaders(cfg, train_root, test_root):
 
 	dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST',
 	 'cifar': 'CIFAR10', 'celeba':'CelebA', 'celeba-faces':'CelebA-Faces'}
-	hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (50,50)}
-	transform_mappings = {'mnist': to_rgb, 'fashionmnist': transforms.Compose([
+	dataset_mappings = {'mnist-flip': 'MNIST', 'fashionmnist': 'FashionMNIST',
+	 'cifar': 'CIFAR10', 'celeba':'CelebA', 'celeba-faces':'CelebA-Faces'}
+	hw_mappings = {'mnist': (28, 28), 'mnist-flip':(28,28),'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (50,50)}
+	transform_mappings = {'mnist': to_rgb, 'mnist-flip':flipped, 'fashionmnist': transforms.Compose([
 		# transforms.ToTensor(),
 		# transforms.Normalize((0.1307,), (0.3081,)),
 		discretize,
-
 		# transforms.Lambda(lambda img:torch.bucketize(img, torch.linspace(0,255,steps=color_levels), right=True)-1),
 		transforms.Lambda(lambda image_tensor: image_tensor.repeat(3, 1, 1)),
 	]), 'cifar': transforms.Compose([normalize, discretize]),
@@ -157,7 +170,7 @@ def get_loaders(cfg, train_root, test_root):
 			test_dataset, _ = test_dataset.random_split([cfg.dataset_size, len(test_dataset)-cfg.dataset_size])
 	if dataset != "CelebA":
 		train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
-		test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
+		test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
 	else:
 		train_loader = train_dataset.pytorch(**deeplake_kwargs)
 		test_loader = test_dataset.pytorch(**deeplake_kwargs)

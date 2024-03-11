@@ -201,9 +201,9 @@ class PixelCNN(nn.Module):
 
     def inpaint(self, images, masks, labels, device='cuda', pbar=True):
         assert images.shape == masks.shape, "images and masks are diff shapes {} {}".format(images.shape, masks.shape)
-        channels, height, width = images.shape
+        count,channels, height, width = images.shape
 
-        samples = torch.zeros(count, *shape).to(device)
+        samples = torch.zeros(*images.shape).to(device)
         # print("generating with labels",labels)
         if pbar:
             from tqdm import tqdm

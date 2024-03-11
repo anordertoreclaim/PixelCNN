@@ -198,3 +198,28 @@ class PixelCNN(nn.Module):
             pbar.close()
 
         return samples
+
+    def inpaint(self, images, masks, labels, device='cuda', pbar=True):
+        assert images.shape == masks.shape, "images and masks are diff shapes {} {}".format(images.shape, masks.shape)
+        channels, height, width = images.shape
+
+        samples = torch.zeros(count, *shape).to(device)
+        # print("generating with labels",labels)
+        if pbar:
+            from tqdm import tqdm
+            pbar = tqdm(total=height*width*channels, desc="Generating samples: ".ljust(20))
+        # Modify this to only do masked pixels
+        with torch.no_grad():
+            for i in range(height):
+                for j in range(width):
+                    for c in range(channels):
+                        unnormalized_probs = self.forward(samples, labels)
+                        pixel_probs = torch.softmax(unnormalized_probs[:, :, c, i, j], dim=1)
+                        sampled_levels = torch.multinomial(pixel_probs, 1).squeeze().float() / (self.color_levels - 1)
+                        samples[:, c, i, j] = sampled_levels * masks[:, c, i, j] + images[:,c,i,j]*(1-masks[:,c,i,j])
+                        if pbar:
+                            pbar.update(1)
+        if pbar:
+            pbar.close()
+
+        return samples

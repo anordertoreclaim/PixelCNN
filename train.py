@@ -34,7 +34,7 @@ def train(cfg, model, device, train_loader, optimizer, scheduler, epoch):
 	model.train()
 	HAS_LABELS = None
 
-	saveflag=False # turn on to save a batch
+	saveflag=cfg.save_sample # turn on to save a batch
 	for data in tqdm(train_loader, desc='Epoch {}/{}'.format(epoch + 1, cfg.epochs).ljust(20)):
 		if HAS_LABELS is None:
 			HAS_LABELS=True
@@ -80,7 +80,7 @@ def test_and_sample(cfg, model, device, test_loader, height, width, losses, para
 
 	model.eval()
 	HAS_LABELS = None
-	saveflag=False # turn on to save a batch
+	saveflag=cfg.save_sample # turn on to save a batch
 	with torch.no_grad():
 		for data in tqdm(test_loader, desc="Testing".ljust(20)):
 			if HAS_LABELS is None:
@@ -166,6 +166,7 @@ def main():
 
 	# samples = model.sample((3, HEIGHT, WIDTH), cfg.epoch_samples, device=device)
 	# save_samples(samples, TRAIN_SAMPLES_DIR, 'epoch{}_samples.png'.format(0 + 1))
+	cfg.epochs+=epoch_offset
 	for epoch in range(EPOCHS):
 		epoch+=epoch_offset
 		if cfg.overfit:

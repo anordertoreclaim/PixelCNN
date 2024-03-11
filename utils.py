@@ -82,7 +82,14 @@ def get_loaders(cfg, train_root, test_root):
     dataset_mappings = {'mnist': 'MNIST', 'fashionmnist': 'FashionMNIST',
      'cifar': 'CIFAR10', 'celeba':'CelebA', 'celeba-faces':'CelebA-Faces'}
     hw_mappings = {'mnist': (28, 28), 'fashionmnist': (28, 28), 'cifar': (32, 32), 'celeba': (50,50)}
-    transform_mappings = {'mnist': to_rgb, 'fashionmnist': to_rgb, 'cifar': transforms.Compose([normalize, discretize]),
+    transform_mappings = {'mnist': to_rgb, 'fashionmnist': transforms.Compose([
+        # transforms.ToTensor(),
+        # transforms.Normalize((0.1307,), (0.3081,)),
+        discretize,
+
+        # transforms.Lambda(lambda img:torch.bucketize(img, torch.linspace(0,255,steps=color_levels), right=True)-1),
+        transforms.Lambda(lambda image_tensor: image_tensor.repeat(3, 1, 1)),
+    ]), 'cifar': transforms.Compose([normalize, discretize]),
          'celeba':transforms.Compose([
             # transforms.ToPILImage(),
             transforms.Resize(hw_mappings['celeba']),

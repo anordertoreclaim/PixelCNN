@@ -50,6 +50,8 @@ def getCFG():
 						help='Flag indicating whether or not to upload each train to wandb')
 	parser.add_argument('--overfit', action="store_true",
 						help='If this flag is set, train will be set to whatever test is')
+	parser.add_argument('--save-sample', action="store_true",
+						help='If this flag is set, it will save an image from train/test to disk.')
 
 	cfg = parser.parse_args()
 	if cfg.dataset == "celeba":
